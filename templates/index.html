@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR رسالة</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Tajawal:wght@400;500;700;800&family=Syne+Mono:wght@400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{
+  --bg:#080808;--surface:#101010;--surface2:#161616;
+  --border:#1e1e1e;--border2:#2a2a2a;
+  --accent:#d4ff47;--accent2:#ff5c35;--text:#f4f4f4;
+  --muted:#555;--muted2:#888;
+  --r-sm:10px;--r-md:14px;--r-lg:20px;--r-xl:26px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;touch-action:manipulation;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Tajawal',sans-serif;
+  min-height:100vh;overflow-x:hidden;font-size:16px;line-height:1.5;
+}
+body[dir="ltr"]{font-family:'Space Grotesk',sans-serif;}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:64px 64px;opacity:.3;
+}
+body::after{
+  content:'';position:fixed;top:-180px;left:50%;transform:translateX(-50%);
+  width:min(700px,100vw);height:400px;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse,rgba(212,255,71,.06) 0%,transparent 70%);
+}
+.lang-bar{
+  position:fixed;top:14px;z-index:300;
+  display:flex;gap:3px;
+  background:rgba(8,8,8,.94);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--border2);border-radius:100px;padding:4px 5px;
+  box-shadow:0 4px 24px rgba(0,0,0,.6);
+}
+body[dir="rtl"] .lang-bar{left:14px;right:auto;}
+body[dir="ltr"] .lang-bar{right:14px;left:auto;}
+.lang-btn{
+  padding:6px 13px;border-radius:100px;
+  font-family:'Space Mono',monospace;font-size:.7rem;font-weight:700;letter-spacing:.05em;
+  cursor:pointer;border:none;background:transparent;color:var(--muted2);transition:all .18s;
+}
+.lang-btn:hover{color:var(--text);}
+.lang-btn.active{background:var(--accent);color:var(--bg);}
+.container{max-width:680px;margin:0 auto;padding:72px 16px 80px;position:relative;z-index:1;}
+@media(min-width:480px){.container{padding:80px 24px 100px;}}
+@media(min-width:768px){.container{padding:88px 32px 100px;}}
+header{margin-bottom:44px;text-align:center;}
+.header-tag{
+  display:inline-block;font-family:'Space Mono',monospace;font-size:.62rem;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--accent);
+  border:1px solid rgba(212,255,71,.2);border-radius:100px;padding:5px 16px;margin-bottom:16px;
+}
+h1{font-family:'Playfair Display',serif;font-size:clamp(2.6rem,8vw,5.4rem);font-weight:900;letter-spacing:-.04em;line-height:.92;margin-bottom:14px;}
+h1 em{font-style:italic;color:var(--accent);}
+.subtitle{color:var(--muted2);font-family:'Space Mono',monospace;font-size:clamp(.7rem,.85rem,1rem);letter-spacing:.05em;}
+.sec-title{font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border2);}
+
+/* PIN SEARCH */
+.pin-search-wrap{
+  display:flex;gap:8px;align-items:center;
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:var(--r-md);padding:10px 10px 10px 18px;margin-bottom:6px;
+  transition:border-color .2s,box-shadow .2s;
+}
+body[dir="rtl"] .pin-search-wrap{padding:10px 18px 10px 10px;}
+.pin-search-wrap:focus-within{border-color:#383838;box-shadow:0 0 0 3px rgba(212,255,71,.06);}
+.pin-search-icon{font-size:1.1rem;flex-shrink:0;opacity:.7;}
+.pin-search-input{
+  flex:1;background:transparent;border:none;outline:none;
+  color:var(--accent);font-family:'Syne Mono',monospace;
+  font-size:1.35rem;letter-spacing:.18em;min-width:0;text-transform:uppercase;
+}
+.pin-search-input::placeholder{color:var(--muted);font-size:1rem;letter-spacing:.08em;font-family:'Space Mono',monospace;}
+.pin-search-btn{
+  flex-shrink:0;padding:11px 20px;
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:var(--r-sm);color:var(--text);font-size:.88rem;font-weight:700;
+  cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent;
+}
+body[dir="rtl"] .pin-search-btn{font-family:'Tajawal',sans-serif;}
+body[dir="ltr"] .pin-search-btn{font-family:'Space Grotesk',sans-serif;}
+.pin-search-btn:hover{border-color:var(--accent);color:var(--accent);}
+.pin-search-btn.busy{opacity:.5;pointer-events:none;}
+.pin-hint-txt{font-family:'Space Mono',monospace;font-size:.62rem;color:var(--muted);}
+.pin-err-txt{font-family:'Space Mono',monospace;font-size:.72rem;display:none;margin-top:6px;padding:8px 12px;border-radius:8px;}
+.pin-err-txt.warn{color:#f59e0b;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);}
+.pin-err-txt.error{color:var(--accent2);background:rgba(255,92,53,.08);border:1px solid rgba(255,92,53,.2);}
+body[dir="rtl"] .pin-err-txt{font-family:'Tajawal',sans-serif;}
+.pin-attempts-bar{display:flex;gap:5px;margin-top:8px;display:none;}
+.attempt-dot{width:10px;height:10px;border-radius:50%;background:var(--border2);transition:background .3s;}
+.attempt-dot.used{background:var(--accent2);}
+.attempt-dot.ok{background:#34d399;}
+
+/* DIVIDER */
+.divider{display:flex;align-items:center;gap:16px;margin:32px 0;}
+.divider-line{flex:1;height:1px;background:var(--border2);}
+.divider-label{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;white-space:nowrap;}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-xl);padding:clamp(22px,5vw,44px);position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:-1px;left:10%;right:10%;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.field-label{display:block;font-family:'Space Mono',monospace;font-size:.64rem;color:var(--accent);letter-spacing:.16em;text-transform:uppercase;margin-bottom:12px;font-weight:700;}
+.field-label .opt{color:var(--muted);font-size:.55rem;}
+
+/* USERNAME FIELD */
+.username-field-wrap{
+  display:flex;align-items:center;gap:0;
+  background:var(--bg);border:2px solid var(--border2);
+  border-radius:var(--r-md);overflow:hidden;
+  transition:border-color .25s,box-shadow .25s;
+  position:relative;
+}
+.username-field-wrap:focus-within{
+  border-color:var(--accent);
+  box-shadow:0 0 0 4px rgba(212,255,71,.1);
+}
+.username-field-wrap.taken{border-color:#ff5c35!important;box-shadow:0 0 0 4px rgba(255,92,53,.1)!important;}
+.username-field-wrap.available{border-color:#34d399!important;box-shadow:0 0 0 4px rgba(52,211,102,.1)!important;}
+.username-at{
+  padding:0 14px;font-family:'Syne Mono',monospace;
+  font-size:1.5rem;font-weight:700;color:var(--accent);
+  background:rgba(212,255,71,.07);
+  border-right:2px solid var(--border2);
+  height:56px;display:flex;align-items:center;flex-shrink:0;
+  letter-spacing:-.02em;
+}
+body[dir="rtl"] .username-at{border-right:none;border-left:2px solid var(--border2);}
+.username-input{
+  flex:1;background:transparent;border:none;outline:none;
+  color:var(--text);
+  font-family:'Syne Mono',monospace;font-size:1.25rem;font-weight:700;
+  letter-spacing:.06em;
+  padding:0 16px;height:56px;min-width:0;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+body[dir="rtl"] .username-input{font-family:'Tajawal',sans-serif;font-size:1.1rem;text-align:right;}
+.username-input::placeholder{color:var(--muted);font-size:.95rem;font-weight:400;letter-spacing:.02em;}
+.username-status{
+  font-size:1.1rem;flex-shrink:0;padding:0 14px;
+  transition:opacity .2s;
+}
+.username-meta{display:flex;align-items:center;justify-content:space-between;margin-top:6px;}
+.username-count-wrap{font-family:'Syne Mono',monospace;font-size:.72rem;color:var(--accent);font-weight:700;}
+.username-max{color:var(--muted);font-weight:400;}
+.username-hint{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--muted);}
+body[dir="rtl"] .username-hint{font-family:'Tajawal',sans-serif;font-size:.7rem;}
+
+/* USERNAME */
+.name-field-wrap{position:relative;}
+.name-input{
+  width:100%;background:var(--bg);border:1px solid var(--border2);
+  border-radius:var(--r-md);color:var(--text);font-size:1rem;
+  padding:13px 16px;outline:none;transition:border-color .2s,box-shadow .2s;
+}
+body[dir="rtl"] .name-input{font-family:'Tajawal',sans-serif;}
+body[dir="ltr"] .name-input{font-family:'Space Grotesk',sans-serif;}
+.name-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(212,255,71,.07);}
+.name-input::placeholder{color:var(--muted);}
+.name-count{font-family:'Space Mono',monospace;font-size:.62rem;color:var(--muted);margin-top:5px;}
+body[dir="rtl"] .name-count{text-align:left;}
+body[dir="ltr"] .name-count{text-align:right;}
+
+/* TEXTAREA */
+.msg-textarea{
+  width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--r-md);
+  color:var(--text);font-size:clamp(1rem,2.5vw,1.08rem);line-height:1.65;
+  padding:16px;resize:vertical;min-height:140px;transition:border-color .2s,box-shadow .2s;outline:none;
+}
+body[dir="rtl"] .msg-textarea{font-family:'Tajawal',sans-serif;}
+body[dir="ltr"] .msg-textarea{font-family:'Space Grotesk',sans-serif;}
+.msg-textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(212,255,71,.07);}
+.msg-textarea::placeholder{color:var(--muted);}
+.char-count{font-family:'Space Mono',monospace;font-size:.68rem;color:var(--muted);margin-top:6px;}
+body[dir="rtl"] .char-count{text-align:left;}
+body[dir="ltr"] .char-count{text-align:right;}
+.char-count.warn{color:var(--accent2);}
+.sep{height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent);margin:26px 0;}
+
+/* PHOTO */
+.photo-row{display:flex;gap:16px;align-items:center;}
+@media(max-width:340px){.photo-row{flex-direction:column;align-items:flex-start;}}
+.avatar-wrap{width:80px;height:80px;flex-shrink:0;border-radius:50%;background:var(--bg);border:2px dashed var(--border2);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .2s;}
+.avatar-wrap:hover{border-color:var(--accent);transform:scale(1.04);}
+.avatar-wrap img{width:100%;height:100%;object-fit:cover;display:none;}
+.avatar-icon{font-size:1.8rem;color:var(--muted);pointer-events:none;}
+.photo-actions{flex:1;min-width:0;}
+.upload-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 18px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text);font-size:.86rem;font-weight:600;cursor:pointer;transition:all .15s;width:100%;}
+body[dir="rtl"] .upload-btn{font-family:'Tajawal',sans-serif;}
+body[dir="ltr"] .upload-btn{font-family:'Space Grotesk',sans-serif;}
+.upload-btn:hover{border-color:var(--accent);color:var(--accent);}
+#fileInput{display:none;}
+.clear-photo-btn{margin-top:8px;width:100%;padding:8px;background:transparent;border:1px dashed var(--border2);border-radius:var(--r-sm);color:var(--muted);font-size:.78rem;cursor:pointer;transition:all .15s;display:none;}
+body[dir="rtl"] .clear-photo-btn{font-family:'Tajawal',sans-serif;}
+body[dir="ltr"] .clear-photo-btn{font-family:'Space Grotesk',sans-serif;}
+.clear-photo-btn.show{display:block;}
+.clear-photo-btn:hover{border-color:var(--accent2);color:var(--accent2);}
+.photo-hint{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--muted);margin-top:8px;}
+
+/* SOCIALS */
+.socials-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;}
+@media(max-width:420px){.socials-grid{grid-template-columns:1fr;}}
+.social-field{display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--border2);border-radius:var(--r-md);padding:11px 14px;transition:border-color .2s;}
+.social-field:focus-within{border-color:#383838;}
+.social-icon{font-size:1.2rem;flex-shrink:0;width:24px;text-align:center;}
+.social-inner{flex:1;min-width:0;}
+.social-lbl{font-family:'Space Mono',monospace;font-size:.55rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px;}
+.social-field input{border:none;background:transparent;color:var(--text);font-size:.9rem;width:100%;outline:none;padding:0;}
+body[dir="rtl"] .social-field input{font-family:'Tajawal',sans-serif;text-align:right;}
+body[dir="ltr"] .social-field input{font-family:'Space Grotesk',sans-serif;}
+.social-field input::placeholder{color:var(--muted);}
+/* WhatsApp input — büyük PIN tarzı */
+#s_whatsapp{
+  font-family:'Syne Mono',monospace!important;
+  font-size:1.45rem!important;
+  letter-spacing:.18em!important;
+  color:var(--accent)!important;
+  font-weight:400;
+}
+#s_whatsapp::placeholder{font-size:.85rem!important;letter-spacing:.04em!important;color:var(--muted)!important;}
+.social-full{grid-column:1/-1;}
+
+/* ══ OTP MODAL ══ */
+.otp-overlay{
+  position:fixed;inset:0;z-index:600;
+  background:rgba(0,0,0,.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+.otp-overlay.open{display:flex;}
+.otp-box{
+  width:100%;max-width:400px;
+  background:var(--surface);border:1px solid var(--border2);border-radius:24px;
+  padding:38px 32px 32px;position:relative;overflow:hidden;
+  animation:otpIn .3s cubic-bezier(.16,1,.3,1);
+}
+.otp-box::before{content:'';position:absolute;top:-1px;left:15%;right:15%;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+@keyframes otpIn{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+.otp-icon{font-size:2.4rem;text-align:center;margin-bottom:14px;}
+.otp-title{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;text-align:center;margin-bottom:6px;letter-spacing:-.02em;}
+.otp-title em{font-style:italic;color:var(--accent);}
+.otp-sub{font-family:'Space Mono',monospace;font-size:.65rem;color:var(--muted2);text-align:center;margin-bottom:6px;letter-spacing:.04em;}
+body[dir="rtl"] .otp-sub{font-family:'Tajawal',sans-serif;font-size:.8rem;}
+.otp-phone-display{
+  font-family:'Syne Mono',monospace;font-size:1.1rem;
+  color:var(--accent);text-align:center;letter-spacing:.18em;
+  margin-bottom:28px;
+}
+/* 6 ayrı kutu */
+.otp-inputs{display:flex;gap:8px;justify-content:center;margin-bottom:10px;}
+.otp-digit{
+  width:48px;height:60px;
+  background:var(--bg);border:2px solid var(--border2);border-radius:12px;
+  font-family:'Syne Mono',monospace;font-size:1.8rem;font-weight:400;
+  color:var(--accent);text-align:center;
+  outline:none;transition:border-color .18s,box-shadow .18s;
+  caret-color:var(--accent);
+}
+.otp-digit:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(212,255,71,.12);}
+.otp-digit.filled{border-color:rgba(212,255,71,.4);}
+.otp-digit.error{border-color:var(--accent2)!important;box-shadow:0 0 0 3px rgba(255,92,53,.12)!important;animation:shake .3s;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.otp-digit.success{border-color:#34d399!important;box-shadow:0 0 0 3px rgba(52,211,153,.12)!important;}
+.otp-err{
+  font-family:'Space Mono',monospace;font-size:.68rem;color:var(--accent2);
+  text-align:center;min-height:20px;margin-bottom:14px;display:none;
+  padding:7px 12px;background:rgba(255,92,53,.07);border:1px solid rgba(255,92,53,.2);border-radius:8px;
+}
+body[dir="rtl"] .otp-err{font-family:'Tajawal',sans-serif;}
+.otp-err.show{display:block;}
+.otp-resend{
+  text-align:center;font-family:'Space Mono',monospace;font-size:.62rem;
+  color:var(--muted);margin-bottom:18px;
+}
+body[dir="rtl"] .otp-resend{font-family:'Tajawal',sans-serif;}
+.otp-resend-btn{background:none;border:none;color:var(--accent);cursor:pointer;font-family:inherit;font-size:inherit;text-decoration:underline;}
+.otp-resend-btn:disabled{color:var(--muted);text-decoration:none;cursor:default;}
+.otp-confirm-btn{
+  width:100%;padding:16px;background:var(--accent);color:var(--bg);
+  border:none;border-radius:12px;font-size:1rem;font-weight:700;
+  cursor:pointer;transition:all .15s;letter-spacing:.04em;display:none;
+}
+body[dir="rtl"] .otp-confirm-btn{font-family:'Tajawal',sans-serif;}
+body[dir="ltr"] .otp-confirm-btn{font-family:'Space Grotesk',sans-serif;}
+.otp-confirm-btn.show{display:block;}
+.otp-confirm-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(212,255,71,.2);}
+.otp-confirm-btn.loading{opacity:.6;pointer-events:none;}
+.otp-cancel{
+  width:100%;margin-top:10px;padding:12px;
+  background:transparent;color:var(--muted2);
+  border:1px solid var(--border2);border-radius:12px;
+  font-size:.88rem;cursor:pointer;transition:all .15s;
+}
+body[dir="rtl"] .otp-cancel{font-family:'Tajawal',sans-serif;}
+body[dir="ltr"] .otp-cancel{font-family:'Space Grotesk',sans-serif;}
+.otp-cancel:hover{border-color:var(--muted2);}
+
+/* GEN BTN */
+.gen-btn{width:100%;margin-top:22px;padding:17px;background:var(--accent);color:var(--bg);border:none;border-radius:var(--r-md);font-size:clamp(1rem,2.5vw,1.06rem);font-weight:700;letter-spacing:.04em;cursor:pointer;transition:transform .15s,box-shadow .15s;-webkit-tap-highlight-color:transparent;}
+body[dir="rtl"] .gen-btn{font-family:'Tajawal',sans-serif;}
+body[dir="ltr"] .gen-btn{font-family:'Space Grotesk',sans-serif;}
+.gen-btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(212,255,71,.2);}
+.gen-btn:active{transform:translateY(0);}
+.gen-btn.loading{opacity:.6;pointer-events:none;}
+.error-msg{color:var(--accent2);font-size:.82rem;margin-top:10px;font-family:'Space Mono',monospace;display:none;}
+
+/* RESULT */
+.result{margin-top:30px;display:none;animation:fadeSlide .4s cubic-bezier(.16,1,.3,1);}
+.result.show{display:block;}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.result-box{background:var(--bg);border:1px solid var(--border2);border-radius:var(--r-xl);padding:22px;}
+.result-inner{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;}
+.qr-wrap{flex-shrink:0;background:#fff;padding:13px;border-radius:var(--r-md);cursor:pointer;transition:box-shadow .2s,transform .15s;}
+.qr-wrap:hover{box-shadow:0 0 0 3px var(--accent);transform:scale(1.02);}
+#qrcode canvas,#qrcode img{display:block;border-radius:4px;}
+.result-info{flex:1;min-width:180px;}
+.result-tag{font-family:'Space Mono',monospace;font-size:.65rem;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px;}
+.result-preview{font-size:.9rem;color:var(--muted2);font-style:italic;line-height:1.5;margin-bottom:12px;word-break:break-word;}
+.url-lbl{font-family:'Space Mono',monospace;font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;margin-top:10px;}
+.url-lbl.share{color:var(--accent);}
+.url-box{background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;font-family:'Space Mono',monospace;font-size:.62rem;color:var(--muted2);word-break:break-all;cursor:pointer;transition:border-color .2s;}
+.url-box:hover{border-color:var(--accent);color:var(--accent);}
+.pin-box{margin-top:12px;padding:13px 16px;background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.22);border-radius:var(--r-md);}
+.pin-lbl{font-family:'Space Mono',monospace;font-size:.58rem;color:#34d399;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;}
+.pin-val{font-family:'Syne Mono',monospace;font-size:1.6rem;font-weight:400;color:var(--accent);letter-spacing:.22em;cursor:pointer;}
+.pin-val:hover{opacity:.8;}
+.pin-hint{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--muted2);margin-top:5px;line-height:1.5;}
+body[dir="rtl"] .pin-hint{font-family:'Tajawal',sans-serif;font-size:.72rem;}
+.result-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.btn-sm{padding:9px 14px;border-radius:9px;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .15s;border:1px solid;white-space:nowrap;-webkit-tap-highlight-color:transparent;}
+body[dir="rtl"] .btn-sm{font-family:'Tajawal',sans-serif;}
+body[dir="ltr"] .btn-sm{font-family:'Space Grotesk',sans-serif;}
+.btn-sm.primary{background:var(--accent);color:var(--bg);border-color:var(--accent);}
+.btn-sm.ghost{background:transparent;color:var(--text);border-color:var(--border2);}
+.btn-sm.green{background:transparent;color:#34d399;border-color:#34d399;}
+.btn-sm:hover{opacity:.82;transform:translateY(-1px);}
+.new-qr-btn{margin-top:12px;width:100%;padding:12px;background:transparent;color:var(--muted);border:1px dashed var(--border2);border-radius:var(--r-md);font-size:.88rem;font-weight:600;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
+body[dir="rtl"] .new-qr-btn{font-family:'Tajawal',sans-serif;}
+body[dir="ltr"] .new-qr-btn{font-family:'Space Grotesk',sans-serif;}
+.new-qr-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--accent);color:var(--bg);padding:12px 26px;border-radius:100px;font-weight:700;font-size:.88rem;z-index:700;transition:transform .3s cubic-bezier(.16,1,.3,1);white-space:nowrap;}
+body[dir="rtl"] .toast{font-family:'Tajawal',sans-serif;}
+body[dir="ltr"] .toast{font-family:'Space Grotesk',sans-serif;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+footer{text-align:center;margin-top:60px;color:var(--muted);font-family:'Space Grotesk',monospace;font-size:.64rem;letter-spacing:.1em;}
+
+.usr-results{margin-top:10px;display:flex;flex-direction:column;gap:8px;}
+.usr-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border2);border-radius:16px;text-decoration:none;color:var(--text);transition:all .15s;}
+.usr-item:hover{border-color:var(--accent);transform:translateY(-1px);}
+.usr-ava{width:40px;height:40px;border-radius:50%;background:var(--bg);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:'Syne Mono',monospace;font-size:.8rem;color:var(--accent);flex-shrink:0;overflow:hidden;}
+.usr-ava img{width:100%;height:100%;object-fit:cover;display:block;}
+.usr-name{font-family:'Syne Mono',monospace;letter-spacing:.06em;font-size:1rem;}
+.usr-none{font-family:'Space Mono',monospace;font-size:.7rem;color:var(--muted);padding:8px 4px;}
+
+.me-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 18px;margin-bottom:22px;background:rgba(212,255,71,.07);border:1px solid rgba(212,255,71,.35);border-radius:18px;}
+.me-text{font-family:'Space Mono',monospace;font-size:.78rem;color:var(--text);}
+.me-text b{font-family:'Syne Mono',monospace;color:var(--accent);letter-spacing:.05em;}
+.me-actions{display:flex;gap:8px;}
+.me-open,.me-out{font-family:'Space Mono',monospace;font-size:.68rem;font-weight:700;letter-spacing:.06em;padding:9px 16px;border-radius:100px;cursor:pointer;text-decoration:none;transition:all .15s;}
+.me-open{background:var(--accent);color:var(--bg);border:1px solid var(--accent);}
+.me-out{background:transparent;color:var(--muted2);border:1px solid var(--border2);}
+.me-out:hover{border-color:var(--accent2);color:var(--accent2);}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="lang-bar">
+    <button class="lang-btn" onclick="setLang('tr')">TR</button>
+    <button class="lang-btn active" onclick="setLang('ar')">AR</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+  </div>
+
+  <header>
+    <div class="header-tag" data-i18n="tag">// نظام رسائل QR</div>
+    <h1 data-i18n-html="h1_html">رسالة <em>QR</em></h1>
+    <p class="subtitle" data-i18n="subtitle">// اكتب ← QR ← امسح ← اقرأ</p>
+  </header>
+
+  <!-- OTURUM AÇIK BANNER -->
+  <div class="me-banner" id="meBanner" style="display:none;">
+    <div class="me-text" id="meText"></div>
+    <div class="me-actions"><a class="me-open" id="meOpen" href="#"></a><button type="button" class="me-out" id="meOut"></button></div>
+  </div>
+
+  <!-- PIN GİRİŞ -->
+  <div class="sec-title" data-i18n="sec_pin">// ادخل PIN للوصول كمالك</div>
+  <form onsubmit="event.preventDefault();doSearch();" style="margin:0;">
+    <div class="pin-search-wrap">
+      <span class="pin-search-icon">🔑</span>
+      <input id="pinInput" class="pin-search-input" type="text" inputmode="text"
+        autocomplete="off" autocorrect="off" autocapitalize="characters"
+        spellcheck="false" maxlength="8" placeholder="XXXXXXXX" data-i18n-ph="pin_ph">
+      <button type="submit" class="pin-search-btn" id="pinSearchBtn" data-i18n="go_btn">← فتح</button>
+    </div>
+    <div class="pin-hint-txt" data-i18n="pin_hint">// كود PIN المكون من 8 خانات</div>
+    <!-- Deneme göstergesi -->
+    <div class="pin-attempts-bar" id="pinAttemptsBar">
+      <div class="attempt-dot" id="dot0"></div>
+      <div class="attempt-dot" id="dot1"></div>
+      <div class="attempt-dot" id="dot2"></div>
+    </div>
+    <div class="pin-err-txt" id="pinErr"></div>
+  </form>
+
+  <!-- KULLANICI ARAMA -->
+  <div class="sec-title" id="usTitle" style="margin-top:28px;"></div>
+  <form id="userSearchForm" style="margin:0;">
+    <div class="pin-search-wrap">
+      <span class="pin-search-icon">🔎</span>
+      <input id="userSearchInput" class="pin-search-input" type="text" autocomplete="off" autocorrect="off"
+        autocapitalize="characters" spellcheck="false" maxlength="8">
+      <button type="submit" class="pin-search-btn" id="usBtn"></button>
+    </div>
+    <div class="pin-hint-txt" id="usHint"></div>
+  </form>
+  <div class="usr-results" id="userResults"></div>
+
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="divider-label" data-i18n="divider">✦ إنشاء QR جديد</div>
+    <div class="divider-line"></div>
+  </div>
+
+  <!-- KART -->
+  <div class="card">
+    <label class="field-label" data-i18n="lbl_msg">اكتب رسالتك</label>
+    <textarea class="msg-textarea" id="textInput"
+      placeholder="اكتب رسالتك هنا... 🤫"
+      data-i18n-ph="msg_ph" maxlength="1000"></textarea>
+    <div class="char-count"><span id="count">0</span> / 1000</div>
+
+    <div class="sep"></div>
+
+    <!-- Foto -->
+    <label class="field-label">
+      <span data-i18n="lbl_photo">صورة الملف الشخصي</span>
+      <span class="opt" data-i18n="opt">&nbsp;(اختياري)</span>
+    </label>
+    <div class="photo-row">
+      <div class="avatar-wrap" id="avatarWrap" onclick="document.getElementById('fileInput').click()">
+        <span class="avatar-icon" id="avatarIcon">📷</span>
+        <img id="avatarImg" alt="">
+      </div>
+      <div class="photo-actions">
+        <button class="upload-btn" type="button"
+          onclick="document.getElementById('fileInput').click()" data-i18n="upload_btn">📁 تحميل صورة</button>
+        <input type="file" id="fileInput" accept="image/*">
+        <button class="clear-photo-btn" id="clearPhotoBtn" type="button"
+          onclick="clearPhoto()" data-i18n="clear_btn">✕ إزالة الصورة</button>
+        <div class="photo-hint">// PNG · JPG · GIF · max 2MB</div>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <!-- Kullanıcı Adı -->
+    <label class="field-label">
+      <span data-i18n="lbl_name">اسم المستخدم</span>
+      <span class="req-star" style="color:var(--accent2);margin-right:4px;">*</span>
+    </label>
+    <div class="username-field-wrap" id="usernameWrap">
+      <div class="username-at">@</div>
+      <input class="username-input" id="usernameInput" type="text" maxlength="8"
+        autocapitalize="characters" autocorrect="off" spellcheck="false"
+        data-i18n-ph="name_ph" placeholder="NAME..."
+        oninput="onUsernameInput(this)">
+      <span class="username-status" id="usernameStatus"></span>
+    </div>
+    <div class="username-meta">
+      <span class="username-hint" data-i18n="name_hint">// اختياري · فريد · إنجليزي فقط</span>
+      <span class="username-count-wrap"><span id="unCount">0</span><span class="username-max">/8</span></span>
+    </div>
+    <div id="usernameWarn" style="display:none;font-family:'Space Mono',monospace;font-size:.62rem;color:var(--accent2);margin-top:5px;padding:6px 12px;background:rgba(255,92,53,.07);border:1px solid rgba(255,92,53,.2);border-radius:8px;"></div>
+    <div id="usernameAvailMsg" style="display:none;font-family:'Space Mono',monospace;font-size:.62rem;margin-top:5px;padding:6px 12px;border-radius:8px;"></div>
+
+    <div class="sep"></div>
+
+    <!-- Sosyal -->
+    <label class="field-label">
+      <span data-i18n="lbl_social">وسائل التواصل</span>
+    </label>
+    <div class="socials-grid">
+      <div class="social-field">
+        <span class="social-icon">📸</span>
+        <div class="social-inner">
+          <div class="social-lbl">Instagram</div>
+          <input type="text" id="s_instagram" data-i18n-ph="user_ph" placeholder="اسم_المستخدم">
+        </div>
+      </div>
+      <div class="social-field">
+        <span class="social-icon">𝕏</span>
+        <div class="social-inner">
+          <div class="social-lbl">Twitter / X</div>
+          <input type="text" id="s_twitter" data-i18n-ph="user_ph" placeholder="اسم_المستخدم">
+        </div>
+      </div>
+      <div class="social-field">
+        <span class="social-icon">🎵</span>
+        <div class="social-inner">
+          <div class="social-lbl">TikTok</div>
+          <input type="text" id="s_tiktok" data-i18n-ph="user_ph" placeholder="اسم_المستخدم">
+        </div>
+      </div>
+      <div class="social-field social-full" id="whatsappField">
+        <span class="social-icon">💬</span>
+        <div class="social-inner">
+          <div class="social-lbl" style="display:flex;align-items:center;gap:4px;">
+            WhatsApp <span style="color:var(--accent2);font-size:.65rem;">*</span>
+          </div>
+          <input type="tel" id="s_whatsapp" inputmode="numeric"
+            autocomplete="tel" maxlength="11"
+            value="07"
+            style="font-family:'Syne Mono',monospace;letter-spacing:.1em;"
+            oninput="onWhatsappInput(this)"
+            onkeydown="onWhatsappKeydown(event, this)">
+        </div>
+      </div>
+    </div>
+    <div id="waWarn" style="display:none;font-family:'Space Mono',monospace;font-size:.62rem;color:var(--accent2);margin-top:6px;padding:6px 12px;background:rgba(255,92,53,.07);border:1px solid rgba(255,92,53,.2);border-radius:8px;"></div>
+
+    <div class="error-msg" id="errorMsg"></div>
+
+
+
+    <button class="gen-btn" id="generateBtn" type="button" onclick="generate()" data-i18n="gen_btn">⬛ إنشاء رمز QR</button>
+
+    <!-- RESULT -->
+    <div class="result" id="result">
+      <div class="result-box">
+        <div class="result-inner">
+          <div class="qr-wrap" onclick="openQRPage()"><div id="qrcode"></div></div>
+          <div class="result-info">
+            <div class="result-tag" data-i18n="qr_ready">✓ رمز QR جاهز</div>
+            <div class="result-preview" id="textPreview"></div>
+            <div class="url-lbl share" data-i18n="share_lbl">📤 رابط المشاركة</div>
+            <div class="url-box" id="urlBox" onclick="copyUrl()"></div>
+            <div class="pin-box">
+              <div class="pin-lbl" data-i18n="pin_lbl">// كود المالك السري</div>
+              <div class="pin-val" id="pinDisplay" onclick="copyPin()">--------</div>
+              <div class="pin-hint" data-i18n="pin_result_hint">اضغط على كود المالك أعلاه للنسخ ثم أدخله في خانة PIN</div>
+            </div>
+            <div class="result-actions">
+              <button class="btn-sm primary" type="button" onclick="openQRPage()" data-i18n="open_btn">↗ فتح</button>
+              <button class="btn-sm ghost"   type="button" onclick="downloadQR()" data-i18n="dl_btn">↓ PNG</button>
+              <button class="btn-sm ghost"   type="button" onclick="copyUrl()"    data-i18n="copy_btn">🔗 نسخ</button>
+              <button class="btn-sm green"   type="button" onclick="copyPin()"    data-i18n="pin_copy_btn">👑 نسخ PIN</button>
+            </div>
+          </div>
+        </div>
+        <button class="new-qr-btn" type="button" onclick="resetForm()" data-i18n="new_btn">+ إنشاء QR جديد</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>Mohammed Hussein</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- OTP MODAL -->
+<div class="otp-overlay" id="otpOverlay">
+  <div class="otp-box">
+    <div class="otp-icon">📱</div>
+    <div class="otp-title" data-i18n-html="otp_title">رمز <em>التحقق</em></div>
+    <div class="otp-sub" data-i18n="otp_sub">// تم إرسال رمز SMS إلى</div>
+    <div class="otp-phone-display" id="otpPhoneDisplay"></div>
+    <!-- Geliştirme modu: kod ekranda gösterilir -->
+    <div id="otpDevCode" style="display:none;margin-bottom:20px;padding:16px 20px;background:rgba(212,255,71,.06);border:1px solid rgba(212,255,71,.25);border-radius:14px;text-align:center;">
+      <div style="font-family:'Space Mono',monospace;font-size:.58rem;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px;" data-i18n="otp_your_code">// كودك هو</div>
+      <div id="otpDevCodeValue" style="font-family:'Syne Mono',monospace;font-size:2.4rem;color:var(--accent);letter-spacing:.28em;font-weight:400;"></div>
+    </div>
+    <div class="otp-inputs" id="otpInputs">
+      <input class="otp-digit" maxlength="1" inputmode="numeric" type="tel" autocomplete="one-time-code">
+      <input class="otp-digit" maxlength="1" inputmode="numeric" type="tel">
+      <input class="otp-digit" maxlength="1" inputmode="numeric" type="tel">
+      <input class="otp-digit" maxlength="1" inputmode="numeric" type="tel">
+      <input class="otp-digit" maxlength="1" inputmode="numeric" type="tel">
+      <input class="otp-digit" maxlength="1" inputmode="numeric" type="tel">
+    </div>
+    <div class="otp-err" id="otpErr"></div>
+    <div class="otp-resend" id="otpResendWrap">
+      <span data-i18n="otp_no_code">لم يصلك الرمز؟</span>
+      <button class="otp-resend-btn" id="otpResendBtn" onclick="resendOtp()" disabled data-i18n="otp_resend">إعادة إرسال</button>
+      <span id="otpCountdown"></span>
+    </div>
+    <button class="otp-confirm-btn" id="otpConfirmBtn" onclick="confirmOtp()" data-i18n="otp_confirm">✓ تأكيد وإنشاء QR</button>
+    <button class="otp-cancel" onclick="closeOtp()" data-i18n="otp_cancel">✕ إلغاء</button>
+  </div>
+</div>
+
+<script>
+const T = {
+  tr:{
+    tag:'// QR Mesaj Sistemi', h1_html:'QR <em>Mesaj</em>',
+    subtitle:'// yaz → QR → tarat → oku',
+    sec_pin:'// Sahip modunu açmak için PIN gir',
+    pin_ph:'XXXXXXXX', pin_hint:'// 8 haneli PIN kodunu gir',
+    go_btn:'→ Aç', divider:'✦ yeni qr oluştur',
+    lbl_name:'Kullanıcı Adı', name_ph:'kullanici_adi...',
+    name_hint:'// isteğe bağlı · benzersiz olmalı',
+    name_available:'✓ Kullanıcı adı uygun!',
+    name_taken:'Bu kullanıcı adı zaten alınmış!',
+    name_latin_only:'⚠ Sadece İngilizce harf (A-Z) ve rakam!',
+    lbl_msg:'Mesajını Yaz', msg_ph:'Mesajını buraya yaz... 🤫',
+    lbl_photo:'Profil Resmi', opt:'(isteğe bağlı)',
+    upload_btn:'📁 Fotoğraf Yükle', clear_btn:'✕ Resmi Kaldır',
+    lbl_social:'Sosyal Medya',
+    user_ph:'kullanici_adi', ch_ph:'kanal_adi', phone_ph:'07XXXXXXXXX',
+    gen_btn:'⬛ QR Kod Oluştur',
+    qr_ready:'✓ QR Hazır', share_lbl:'📤 Paylaş Linki',
+    pin_lbl:'// Sahip PIN Kodu',
+    pin_result_hint:'PIN\'e tıkla → kopyala → arama kutusuna yapıştır',
+    open_btn:'↗ Aç', dl_btn:'↓ PNG', copy_btn:'🔗 Kopyala', pin_copy_btn:'👑 PIN Kopyala',
+    new_btn:'+ Yeni QR Oluştur',
+    t_url:'Link kopyalandı!', t_pin:'PIN kopyalandı!', t_dl:'QR indirildi!',
+    e_empty:'Önce bir şeyler yaz!', e_conn:'Bağlantı hatası!', e_img:'Resim max 2MB!',
+    loading:'⏳ Oluşturuluyor...', searching:'⏳ Aranıyor...',
+    e_pin_fmt:'PIN 8 haneli olmalı!',
+    err_wrong_pin:'Yanlış PIN!',
+    err_remaining:'Kalan hak: %d',
+    err_blocked:'Bugünlük erişim engellendi! Yarın tekrar dene.',
+    ac_ok:'✓ Kod geçerli',
+    e_username_req:'Kullanıcı adı zorunludur!',
+    e_wa_req:'WhatsApp numarası zorunludur!',
+    e_wa_fmt:'07 ile başlayan 11 haneli numara girin (örn: 07911123456)',
+    wa_ok:'✅', wa_err:'❌',
+    otp_title_html:'Doğrulama <em>Kodu</em>',
+    otp_sub:'// SMS kodu gönderildi →',
+    otp_no_code:'Kod gelmedi mi?', otp_resend:'Tekrar Gönder',
+    otp_confirm:'✓ Onayla ve QR Oluştur',
+    otp_cancel:'✕ İptal',
+    otp_err_wrong:'Hatalı kod! Tekrar dene.',
+    otp_err_expired:'Kod süresi doldu. Tekrar gönder.',
+    otp_err_conn:'Bağlantı hatası!',
+    otp_sending:'⏳ Gönderiliyor...',
+    otp_sent:'✓ Kod gönderildi!',
+    otp_creating:'⏳ QR Oluşturuluyor...',
+    otp_your_code:'// Kodun',
+  },
+  ar:{
+    tag:'// نظام رسائل QR', h1_html:'رسالة <em>QR</em>',
+    subtitle:'// اكتب ← QR ← امسح ← اقرأ',
+    sec_pin:'// ادخل PIN للوصول كمالك',
+    pin_ph:'XXXXXXXX', pin_hint:'// كود PIN المكون من 8 خانات',
+    go_btn:'← فتح', divider:'✦ إنشاء QR جديد',
+    lbl_name:'اسم المستخدم', name_ph:'اسم_المستخدم...',
+    name_hint:'// اختياري · يجب أن يكون فريداً',
+    name_available:'✓ الاسم متاح!',
+    name_taken:'اسم المستخدم هذا مأخوذ!',
+    name_latin_only:'⚠ الحروف الإنجليزية والأرقام فقط!',
+    lbl_msg:'اكتب رسالتك', msg_ph:'اكتب رسالتك هنا... 🤫',
+    lbl_photo:'صورة الملف الشخصي', opt:'(اختياري)',
+    upload_btn:'📁 تحميل صورة', clear_btn:'✕ إزالة الصورة',
+    lbl_social:'وسائل التواصل',
+    user_ph:'اسم_المستخدم', ch_ph:'اسم_القناة', phone_ph:'07XXXXXXXXX',
+    gen_btn:'⬛ إنشاء رمز QR',
+    qr_ready:'✓ رمز QR جاهز', share_lbl:'📤 رابط المشاركة',
+    pin_lbl:'// كود المالك السري',
+    pin_result_hint:'اضغط على الكود للنسخ ثم أدخله في خانة PIN',
+    open_btn:'↗ فتح', dl_btn:'↓ PNG', copy_btn:'🔗 نسخ', pin_copy_btn:'👑 نسخ PIN',
+    new_btn:'+ إنشاء QR جديد',
+    t_url:'تم نسخ الرابط!', t_pin:'تم نسخ PIN!', t_dl:'تم تنزيل QR!',
+    e_empty:'اكتب شيئاً أولاً!', e_conn:'خطأ في الاتصال!', e_img:'الصورة أكبر من 2MB!',
+    loading:'⏳ جارٍ الإنشاء...', searching:'⏳ جارٍ البحث...',
+    e_pin_fmt:'يجب أن يكون PIN 8 خانات!',
+    err_wrong_pin:'كود PIN غير صحيح!',
+    err_remaining:'المحاولات المتبقية: %d',
+    err_blocked:'تم حظر الوصول اليوم! حاول غداً.',
+    ac_ok:'✓ الكود صالح',
+    e_username_req:'اسم المستخدم مطلوب!',
+    e_wa_req:'رقم WhatsApp مطلوب!',
+    e_wa_fmt:'أدخل رقماً من 11 خانة يبدأ بـ 07 (مثال: 07911123456)',
+    wa_ok:'✅', wa_err:'❌',
+    otp_title_html:'رمز <em>التحقق</em>',
+    otp_sub:'// تم إرسال رمز SMS إلى',
+    otp_no_code:'لم يصلك الرمز؟', otp_resend:'إعادة إرسال',
+    otp_confirm:'✓ تأكيد وإنشاء QR',
+    otp_cancel:'✕ إلغاء',
+    otp_err_wrong:'الرمز غير صحيح! حاول مجدداً.',
+    otp_err_expired:'انتهت صلاحية الرمز. أعد الإرسال.',
+    otp_err_conn:'خطأ في الاتصال!',
+    otp_sending:'⏳ جارٍ الإرسال...',
+    otp_sent:'✓ تم إرسال الرمز!',
+    otp_creating:'⏳ جارٍ إنشاء QR...',
+    otp_your_code:'// كودك هو',
+  },
+  en:{
+    tag:'// QR Message System', h1_html:'QR <em>Message</em>',
+    subtitle:'// write → QR → scan → read',
+    sec_pin:'// Enter PIN to open owner mode',
+    pin_ph:'XXXXXXXX', pin_hint:'// Your 8-character PIN',
+    go_btn:'→ Open', divider:'✦ create new qr',
+    lbl_name:'Username', name_ph:'username...',
+    name_hint:'// optional · must be unique',
+    name_available:'✓ Username available!',
+    name_taken:'This username is already taken!',
+    name_latin_only:'⚠ Only English letters (A-Z) and numbers!',
+    lbl_msg:'Write Your Message', msg_ph:'Write your message here... 🤫',
+    lbl_photo:'Profile Picture', opt:'(optional)',
+    upload_btn:'📁 Upload Photo', clear_btn:'✕ Remove Photo',
+    lbl_social:'Social Media',
+    user_ph:'username', ch_ph:'channel_name', phone_ph:'07XXXXXXXXX',
+    gen_btn:'⬛ Generate QR Code',
+    qr_ready:'✓ QR Ready', share_lbl:'📤 Share Link',
+    pin_lbl:'// Owner PIN Code',
+    pin_result_hint:'Tap PIN to copy → paste into the PIN box',
+    open_btn:'↗ Open', dl_btn:'↓ PNG', copy_btn:'🔗 Copy', pin_copy_btn:'👑 Copy PIN',
+    new_btn:'+ Create New QR',
+    t_url:'Link copied!', t_pin:'PIN copied!', t_dl:'QR downloaded!',
+    e_empty:'Write something first!', e_conn:'Connection error!', e_img:'Image max 2MB!',
+    loading:'⏳ Generating...', searching:'⏳ Searching...',
+    e_pin_fmt:'PIN must be 8 characters!',
+    err_wrong_pin:'Wrong PIN!',
+    err_remaining:'Attempts remaining: %d',
+    err_blocked:'Access blocked for today! Try again tomorrow.',
+    ac_ok:'✓ Code valid',
+    e_username_req:'Username is required!',
+    e_wa_req:'WhatsApp number is required!',
+    e_wa_fmt:'Enter an 11-digit number starting with 07 (e.g. 07911123456)',
+    wa_ok:'✅', wa_err:'❌',
+    otp_title_html:'Verification <em>Code</em>',
+    otp_sub:'// SMS code sent to',
+    otp_no_code:"Didn't receive the code?", otp_resend:'Resend',
+    otp_confirm:'✓ Confirm & Create QR',
+    otp_cancel:'✕ Cancel',
+    otp_err_wrong:'Wrong code! Try again.',
+    otp_err_expired:'Code expired. Resend it.',
+    otp_err_conn:'Connection error!',
+    otp_sending:'⏳ Sending...',
+    otp_sent:'✓ Code sent!',
+    otp_creating:'⏳ Creating QR...',
+    otp_your_code:'// Your code',
+  }
+};
+
+let lang = 'ar';
+
+function setLang(l) {
+  lang = l;
+  const t = T[l];
+  document.documentElement.lang = l;
+  document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
+  document.querySelectorAll('.lang-btn').forEach(b =>
+    b.classList.toggle('active', b.textContent.trim().toUpperCase() === l.toUpperCase()));
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.getAttribute('data-i18n');
+    if (t[k] != null) el.textContent = t[k];
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const k = el.getAttribute('data-i18n-html');
+    if (t[k] != null) el.innerHTML = t[k];
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    const k = el.getAttribute('data-i18n-ph');
+    if (t[k] != null) el.placeholder = t[k];
+  });
+}
+
+// PIN input — A-Z ve 0-9
+const pinInput = document.getElementById('pinInput');
+pinInput.addEventListener('input', () => {
+  const pos     = pinInput.selectionStart;
+  const cleaned = pinInput.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (pinInput.value !== cleaned) {
+    pinInput.value = cleaned;
+    try { pinInput.setSelectionRange(pos, pos); } catch(e) {}
+  }
+  document.getElementById('pinErr').style.display = 'none';
+});
+
+// Deneme noktaları güncelle
+let failCount = 0;
+function updateDots(fails, reset) {
+  const bar = document.getElementById('pinAttemptsBar');
+  bar.style.display = 'flex';
+  for (let i = 0; i < 3; i++) {
+    const dot = document.getElementById('dot' + i);
+    dot.className = 'attempt-dot';
+    if (reset) { dot.classList.add('ok'); }
+    else if (i < fails) { dot.classList.add('used'); }
+  }
+  if (reset) {
+    setTimeout(() => {
+      bar.style.display = 'none';
+      document.querySelectorAll('.attempt-dot').forEach(d => d.className = 'attempt-dot');
+    }, 1800);
+  }
+}
+
+async function doSearch() {
+  const t   = T[lang];
+  const pin = (pinInput.value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const errEl = document.getElementById('pinErr');
+  const btn   = document.getElementById('pinSearchBtn');
+
+  errEl.className = 'pin-err-txt';
+  errEl.style.display = 'none';
+
+  if (pin.length < 8) {
+    errEl.textContent = '⚠ ' + t.e_pin_fmt;
+    errEl.classList.add('warn');
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.textContent = t.searching;
+  btn.classList.add('busy');
+
+  try {
+    const res  = await fetch('/api/find-by-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      pinInput.value = '';
+      if (data.error === 'BLOCKED') {
+        failCount = 3;
+        updateDots(3, false);
+        errEl.textContent = '🚫 ' + t.err_blocked;
+        errEl.classList.add('error');
+        errEl.style.display = 'block';
+        btn.disabled = true;
+        pinInput.disabled = true;
+        return;
+      }
+      if (data.error === 'WRONG_PIN') {
+        failCount = 3 - (data.remaining || 0);
+        updateDots(failCount, false);
+        const rem = data.remaining || 0;
+        errEl.textContent = '⚠ ' + t.err_wrong_pin + '  ' + t.err_remaining.replace('%d', rem);
+        errEl.classList.add('warn');
+        errEl.style.display = 'block';
+        return;
+      }
+      errEl.textContent = '⚠ ' + (data.error || t.err_wrong_pin);
+      errEl.classList.add('warn');
+      errEl.style.display = 'block';
+      return;
+    }
+
+    // Başarılı
+    updateDots(0, true);
+    pinInput.value = '';
+    window.location.href = '/view/' + data.entry_id + '?token=' + data.owner_token;
+  } catch(err) {
+    errEl.textContent = '⚠ ' + t.e_conn;
+    errEl.classList.add('error');
+    errEl.style.display = 'block';
+  } finally {
+    btn.textContent = T[lang].go_btn;
+    btn.classList.remove('busy');
+  }
+}
+
+// USERNAME INPUT
+let usernameCheckTimer = null;
+
+function onUsernameInput(inp) {
+  const raw   = inp.value;
+  const upper = raw.toUpperCase();
+  // Sadece A-Z, 0-9, ., _, - kabul et
+  const clean = upper.replace(/[^A-Z0-9_.-]/g, '');
+  inp.value   = clean;
+  document.getElementById('unCount').textContent = clean.length;
+
+  const warnEl = document.getElementById('usernameWarn');
+  const avail  = document.getElementById('usernameAvailMsg');
+  const wrap   = document.getElementById('usernameWrap');
+  wrap.classList.remove('taken','available');
+  avail.style.display = 'none';
+  document.getElementById('usernameStatus').textContent = '';
+
+  // Latin dışı karakter girilmişse uyar
+  const hasNonLatin = /[^A-Za-z0-9_.\-]/.test(raw);
+  if (hasNonLatin) {
+    warnEl.textContent = T[lang].name_latin_only || '⚠ Sadece İngilizce harf ve rakam!';
+    warnEl.style.display = 'block';
+  } else {
+    warnEl.style.display = 'none';
+  }
+
+  if (clean.length === 0) { avail.style.display='none'; return; }
+
+  // 600ms bekle, sonra benzersizlik kontrol et
+  clearTimeout(usernameCheckTimer);
+  document.getElementById('usernameStatus').textContent = '⏳';
+  usernameCheckTimer = setTimeout(async () => {
+    try {
+      const res  = await fetch('/api/check-username?name=' + encodeURIComponent(clean));
+      const data = await res.json();
+      if (data.available) {
+        wrap.classList.add('available');
+        document.getElementById('usernameStatus').textContent = '✅';
+        avail.style.cssText = 'display:block;font-family:\'Space Mono\',monospace;font-size:.62rem;margin-top:5px;padding:6px 12px;border-radius:8px;background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.2);color:#34d399;';
+        avail.textContent = T[lang].name_available || '✓ Kullanıcı adı uygun!';
+      } else {
+        wrap.classList.add('taken');
+        document.getElementById('usernameStatus').textContent = '❌';
+        avail.style.cssText = 'display:block;font-family:\'Space Mono\',monospace;font-size:.62rem;margin-top:5px;padding:6px 12px;border-radius:8px;background:rgba(255,92,53,.07);border:1px solid rgba(255,92,53,.2);color:var(--accent2);';
+        avail.textContent = T[lang].name_taken || 'Bu isim alınmış!';
+      }
+    } catch(e) { document.getElementById('usernameStatus').textContent = ''; }
+  }, 600);
+}
+
+// CHAR COUNTERS
+const textInput = document.getElementById('textInput');
+const countEl   = document.getElementById('count');
+const charDiv   = document.querySelector('.char-count');
+textInput.addEventListener('input', () => {
+  const n = textInput.value.length;
+  countEl.textContent = n;
+  charDiv.classList.toggle('warn', n > 800);
+});
+
+
+
+// PHOTO
+let profileImageData = '';
+const fileInput     = document.getElementById('fileInput');
+const avatarImg     = document.getElementById('avatarImg');
+const avatarIcon    = document.getElementById('avatarIcon');
+const clearPhotoBtn = document.getElementById('clearPhotoBtn');
+
+fileInput.addEventListener('change', () => {
+  const f = fileInput.files[0];
+  if (!f) return;
+  if (f.size > 2 * 1024 * 1024) { showErr(T[lang].e_img); return; }
+  const r = new FileReader();
+  r.onload = e => {
+    profileImageData = e.target.result;
+    avatarImg.src = profileImageData;
+    avatarImg.style.display = 'block';
+    avatarIcon.style.display = 'none';
+    clearPhotoBtn.classList.add('show');
+  };
+  r.readAsDataURL(f);
+});
+
+function clearPhoto() {
+  profileImageData = '';
+  avatarImg.src = ''; avatarImg.style.display = 'none';
+  avatarIcon.style.display = '';
+  clearPhotoBtn.classList.remove('show');
+  fileInput.value = '';
+}
+
+// WHATSAPP INPUT — 07 prefix korumalı, sadece rakam, toplam 11 hane
+function onWhatsappInput(inp) {
+  // Sadece rakamları al
+  let val = inp.value.replace(/[^0-9]/g, '');
+  // Her zaman 07 ile başlasın
+  if (!val.startsWith('07')) {
+    val = '07' + val.replace(/^0*7*/, '');
+  }
+  // Max 11 karakter
+  val = val.slice(0, 11);
+  inp.value = val;
+  document.getElementById('waWarn').style.display = 'none';
+}
+
+function onWhatsappKeydown(e, inp) {
+  // Cursor 07'nin içine giremesin
+  setTimeout(() => {
+    if (inp.selectionStart < 2) {
+      inp.setSelectionRange(2, 2);
+    }
+  }, 0);
+}
+
+function setWaError(msg) {
+  const warnEl = document.getElementById('waWarn');
+  warnEl.textContent = '⚠ ' + msg;
+  warnEl.style.display = 'block';
+}
+
+// ERİŞİM KODU INPUT — sadece harf+rakam, 7 hane
+
+
+
+
+
+
+// GENERATE — form validate et, erişim kodu doğrula, sonra OTP modal aç
+let currentUrl = '', currentPin = '', currentDisplayName = '';
+let pendingFormData = null;
+
+async function generate() {
+  const t = T[lang];
+  const text = textInput.value.trim();
+  if (!text) { showErr(t.e_empty); return; }
+
+  // 1. Kullanıcı adı zorunlu
+  const rawName = (document.getElementById('usernameInput')?.value || '').toUpperCase().replace(/[^A-Z0-9_.-]/g,'').slice(0,8);
+  if (!rawName) {
+    showErr(t.e_username_req);
+    document.getElementById('usernameInput')?.focus();
+    document.getElementById('usernameWrap')?.classList.add('taken');
+    return;
+  }
+
+  // 2. WhatsApp zorunlu — 07 ile başlayan 11 hane
+  const waRaw = (document.getElementById('s_whatsapp').value || '').replace(/[^0-9]/g,'');
+  if (waRaw === '07' || waRaw.length < 3) {
+    showErr(t.e_wa_req);
+    document.getElementById('s_whatsapp')?.focus();
+    setWaError(t.e_wa_req);
+    return;
+  }
+  if (waRaw.length !== 11) {
+    showErr(t.e_wa_fmt);
+    document.getElementById('s_whatsapp')?.focus();
+    setWaError(t.e_wa_fmt);
+    return;
+  }
+
+  hideErr();
+
+  // Form verisini sakla
+  pendingFormData = {
+    text,
+    display_name: rawName,
+    socials: {
+      instagram: (document.getElementById('s_instagram').value || '').trim().replace(/^@/, ''),
+      twitter:   (document.getElementById('s_twitter').value   || '').trim().replace(/^@/, ''),
+      tiktok:    (document.getElementById('s_tiktok').value    || '').trim().replace(/^@/, ''),
+      whatsapp:  waRaw
+    },
+    profile_image: (profileImageData && profileImageData.startsWith('data:image')) ? profileImageData : '',
+    phone: waRaw
+  };
+
+  // OTP gönder ve modal aç
+  await sendOtp(waRaw);
+}
+
+// ══════════════════════════
+//  OTP SİSTEMİ
+// ══════════════════════════
+let otpCountdownTimer = null;
+let otpVerified = false;
+
+async function sendOtp(phone) {
+  const t = T[lang];
+  const btn = document.getElementById('generateBtn');
+  btn.classList.add('loading');
+  btn.textContent = t.otp_sending;
+
+  try {
+    const res = await fetch('/api/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone })
+    });
+    const data = await res.json();
+    if (!res.ok) { showErr(data.error || t.otp_err_conn); return; }
+    openOtpModal(phone, data.dev_code || null);
+    toast(t.otp_sent);
+  } catch(e) {
+    showErr(t.otp_err_conn);
+  } finally {
+    btn.classList.remove('loading');
+    btn.textContent = T[lang].gen_btn;
+  }
+}
+
+function openOtpModal(phone, devCode) {
+  const t = T[lang];
+  otpVerified = false;
+
+  // Modal metinleri güncelle
+  const titleEl = document.querySelector('.otp-title');
+  if (titleEl) titleEl.innerHTML = t.otp_title_html || 'رمز <em>التحقق</em>';
+  document.querySelectorAll('[data-i18n="otp_sub"]').forEach(el => el.textContent = t.otp_sub);
+  document.querySelectorAll('[data-i18n="otp_no_code"]').forEach(el => el.textContent = t.otp_no_code);
+  document.querySelectorAll('[data-i18n="otp_resend"]').forEach(el => el.textContent = t.otp_resend);
+  document.querySelectorAll('[data-i18n="otp_confirm"]').forEach(el => el.textContent = t.otp_confirm);
+  document.querySelectorAll('[data-i18n="otp_cancel"]').forEach(el => el.textContent = t.otp_cancel);
+
+  // Telefon göster
+  document.getElementById('otpPhoneDisplay').textContent = phone.replace(/(\d{5})(\d{3})(\d{3})/, '$1 $2 $3');
+
+  // Dev kod kutusu
+  const devBox = document.getElementById('otpDevCode');
+  const devVal = document.getElementById('otpDevCodeValue');
+  if (devCode) {
+    devVal.textContent = devCode;
+    devBox.style.display = 'block';
+    // i18n
+    const lbl = devBox.querySelector('[data-i18n="otp_your_code"]');
+    if (lbl) lbl.textContent = T[lang].otp_your_code || '// Your code';
+  } else {
+    devBox.style.display = 'none';
+  }
+
+  // Kutucukları temizle
+  const digits = document.querySelectorAll('.otp-digit');
+  digits.forEach(d => { d.value = ''; d.classList.remove('filled','error','success'); });
+
+  // Hata ve confirm butonu gizle
+  document.getElementById('otpErr').classList.remove('show');
+  document.getElementById('otpConfirmBtn').classList.remove('show');
+
+  // Geri sayım başlat (60sn)
+  startOtpCountdown(60);
+
+  document.getElementById('otpOverlay').classList.add('open');
+  setTimeout(() => digits[0]?.focus(), 200);
+
+  // Digit input event'leri bağla
+  setupOtpInputs();
+}
+
+function setupOtpInputs() {
+  const digits = document.querySelectorAll('.otp-digit');
+  digits.forEach((inp, i) => {
+    inp.oninput = null;
+    inp.onkeydown = null;
+    inp.onpaste = null;
+
+    inp.addEventListener('input', (e) => {
+      const val = e.target.value.replace(/[^0-9]/g,'');
+      e.target.value = val.slice(-1);
+      if (val) {
+        e.target.classList.add('filled');
+        if (i < digits.length - 1) digits[i+1].focus();
+      } else {
+        e.target.classList.remove('filled');
+      }
+      document.getElementById('otpErr').classList.remove('show');
+      checkOtpComplete();
+    });
+
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !inp.value && i > 0) {
+        digits[i-1].focus();
+        digits[i-1].value = '';
+        digits[i-1].classList.remove('filled');
+      }
+    });
+
+    inp.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g,'');
+      digits.forEach((d, j) => {
+        if (paste[j]) { d.value = paste[j]; d.classList.add('filled'); }
+      });
+      const next = Math.min(paste.length, digits.length - 1);
+      digits[next].focus();
+      checkOtpComplete();
+    });
+  });
+}
+
+function checkOtpComplete() {
+  const digits = document.querySelectorAll('.otp-digit');
+  const code = Array.from(digits).map(d => d.value).join('');
+  if (code.length === 6) {
+    // Otomatik verify
+    verifyOtpCode(code);
+  }
+}
+
+async function verifyOtpCode(code) {
+  const t = T[lang];
+  if (!pendingFormData) return;
+
+  try {
+    const res = await fetch('/api/verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: pendingFormData.phone, code })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      // Hata — kutuları kırmızı yap
+      document.querySelectorAll('.otp-digit').forEach(d => {
+        d.classList.add('error');
+        d.classList.remove('filled','success');
+      });
+      const errEl = document.getElementById('otpErr');
+      errEl.textContent = '⚠ ' + (data.error === 'EXPIRED' ? t.otp_err_expired : t.otp_err_wrong);
+      errEl.classList.add('show');
+      // Kutucukları temizle ve ilkine odaklan
+      setTimeout(() => {
+        document.querySelectorAll('.otp-digit').forEach(d => {
+          d.value = ''; d.classList.remove('error','filled');
+        });
+        document.querySelector('.otp-digit')?.focus();
+      }, 800);
+      return;
+    }
+
+    // Başarılı — yeşil
+    document.querySelectorAll('.otp-digit').forEach(d => {
+      d.classList.add('success');
+      d.classList.remove('error');
+    });
+    otpVerified = true;
+    document.getElementById('otpConfirmBtn').classList.add('show');
+
+  } catch(e) {
+    const errEl = document.getElementById('otpErr');
+    errEl.textContent = '⚠ ' + t.otp_err_conn;
+    errEl.classList.add('show');
+  }
+}
+
+async function confirmOtp() {
+  if (!otpVerified || !pendingFormData) return;
+  const t = T[lang];
+  const btn = document.getElementById('otpConfirmBtn');
+  btn.classList.add('loading');
+  btn.textContent = t.otp_creating;
+
+  try {
+    const { text, display_name, socials, profile_image } = pendingFormData;
+    const res = await fetch('/api/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, display_name, socials, profile_image, profile_image_url: '' })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      if (data.error === 'USERNAME_TAKEN') { closeOtp(); showErr(t.name_taken); return; }
+      if (data.error === 'DAILY_LIMIT')    { closeOtp(); showErr(t.err_blocked); return; }
+      closeOtp(); showErr(data.message || data.error || t.e_conn); return;
+    }
+
+    currentUrl = data.url;
+    currentPin = data.owner_pin;
+    currentDisplayName = data.display_name || display_name || '';
+    closeOtp();
+    showResult(text, data.url, data.owner_pin);
+    pendingFormData = null;
+
+  } catch(e) {
+    closeOtp(); showErr(t.e_conn);
+  } finally {
+    btn.classList.remove('loading');
+    btn.textContent = t.otp_confirm;
+  }
+}
+
+async function resendOtp() {
+  if (!pendingFormData) return;
+  const btn = document.getElementById('otpResendBtn');
+  btn.disabled = true;
+  document.querySelectorAll('.otp-digit').forEach(d => { d.value=''; d.classList.remove('filled','error','success'); });
+  document.getElementById('otpErr').classList.remove('show');
+  document.getElementById('otpConfirmBtn').classList.remove('show');
+  otpVerified = false;
+
+  try {
+    const res = await fetch('/api/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: pendingFormData.phone })
+    });
+    const data = await res.json();
+    // Yeni kodu göster
+    const devVal = document.getElementById('otpDevCodeValue');
+    const devBox = document.getElementById('otpDevCode');
+    if (data.dev_code) { devVal.textContent = data.dev_code; devBox.style.display = 'block'; }
+  } catch(e) {}
+
+  startOtpCountdown(60);
+  toast(T[lang].otp_sent);
+  setTimeout(() => document.querySelector('.otp-digit')?.focus(), 100);
+}
+
+function startOtpCountdown(seconds) {
+  clearInterval(otpCountdownTimer);
+  const resendBtn = document.getElementById('otpResendBtn');
+  const countdown = document.getElementById('otpCountdown');
+  resendBtn.disabled = true;
+  let s = seconds;
+  const tick = () => {
+    countdown.textContent = s > 0 ? ` (${s}s)` : '';
+    if (s <= 0) {
+      clearInterval(otpCountdownTimer);
+      resendBtn.disabled = false;
+      countdown.textContent = '';
+    }
+    s--;
+  };
+  tick();
+  otpCountdownTimer = setInterval(tick, 1000);
+}
+
+function closeOtp() {
+  document.getElementById('otpOverlay').classList.remove('open');
+  clearInterval(otpCountdownTimer);
+}
+
+function showResult(text, url, pin) {
+  const qrDiv = document.getElementById('qrcode');
+  qrDiv.innerHTML = '';
+  new QRCode(qrDiv, { text: url, width: 180, height: 180,
+    colorDark:'#000', colorLight:'#fff', correctLevel:QRCode.CorrectLevel.H });
+  document.getElementById('textPreview').textContent = text.length > 80 ? text.slice(0,80)+'…' : text;
+  document.getElementById('urlBox').textContent   = url;
+  document.getElementById('pinDisplay').textContent = pin;
+  const r = document.getElementById('result');
+  r.classList.add('show');
+  r.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function downloadQR() {
+  const canvas = document.querySelector('#qrcode canvas');
+  if (!canvas) {
+    const img = document.querySelector('#qrcode img');
+    if (img) { const a=document.createElement('a');a.href=img.src;a.download='qr.png';a.click(); }
+    return;
+  }
+  const label = currentDisplayName ? '@' + currentDisplayName : '';
+  const labelH = label ? 32 : 0;
+  const out = document.createElement('canvas'), p = 20;
+  out.width = canvas.width + p*2;
+  out.height = canvas.height + p*2 + labelH;
+  const ctx = out.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, out.width, out.height);
+  ctx.drawImage(canvas, p, p);
+  if (label) {
+    ctx.fillStyle = '#111';
+    ctx.font = 'bold 15px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, out.width / 2, canvas.height + p + 22);
+  }
+  const a = document.createElement('a');
+  a.download = (currentDisplayName ? currentDisplayName : 'qr') + '.png';
+  a.href = out.toDataURL(); a.click();
+  toast(T[lang].t_dl);
+}
+
+function openQRPage() { if (currentUrl) window.location.href = currentUrl; }
+function copyUrl()    { navigator.clipboard.writeText(currentUrl).then(()=>toast(T[lang].t_url)); }
+function copyPin()    { navigator.clipboard.writeText(currentPin).then(()=>toast(T[lang].t_pin)); }
+
+function resetForm() {
+  textInput.value = ''; countEl.textContent = '0'; charDiv.classList.remove('warn');
+  document.getElementById('result').classList.remove('show');
+  clearPhoto();
+  ['s_instagram','s_twitter','s_tiktok'].forEach(id =>
+    document.getElementById(id).value = '');
+  document.getElementById('s_whatsapp').value = '07';
+  document.getElementById('waWarn').style.display = 'none';
+
+  const uInp = document.getElementById('usernameInput');
+  if (uInp) { uInp.value = ''; }
+  document.getElementById('unCount').textContent = '0';
+  const uw = document.getElementById('usernameWrap');
+  if (uw) uw.classList.remove('taken','available');
+  document.getElementById('usernameAvailMsg').style.display = 'none';
+  document.getElementById('usernameWarn').style.display = 'none';
+  document.getElementById('usernameStatus').textContent = '';
+}
+
+function showErr(msg) { const e=document.getElementById('errorMsg'); e.textContent='⚠ '+msg; e.style.display='block'; }
+function hideErr()    { document.getElementById('errorMsg').style.display='none'; }
+function toast(msg)   { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+</script>
+
+<script>
+(function(){
+  var L={ar:{t:'// ابحث عن مستخدم',ph:'اسم المستخدم',b:'بحث',h:'// اكتب حرفين على الأقل',none:'لا توجد نتائج',err:'حاول لاحقًا'},
+         tr:{t:'// Kullanıcı ara',ph:'KULLANICI ADI',b:'Ara',h:'// en az 2 harf yaz',none:'Sonuç yok',err:'Biraz sonra dene'},
+         en:{t:'// Find a user',ph:'USERNAME',b:'Search',h:'// type at least 2 letters',none:'No results',err:'Try again later'}};
+  function $(i){return document.getElementById(i);}
+  function tt(){return L[(typeof lang!=='undefined'&&L[lang])?lang:'ar'];}
+  var inp=$('userSearchInput'),box=$('userResults'),timer,seq=0;
+  function labels(){var t=tt();$('usTitle').textContent=t.t;inp.placeholder=t.ph;$('usBtn').textContent=t.b;$('usHint').textContent=t.h;}
+  function clean(v){return v.toUpperCase().replace(/[^A-Z0-9_.-]/g,'').slice(0,8);}
+  function note(t){box.textContent='';var p=document.createElement('div');p.className='usr-none';p.textContent=t;box.appendChild(p);}
+  function render(list){
+    box.textContent='';if(!list.length){note(tt().none);return;}
+    list.forEach(function(u){
+      var a=document.createElement('a');a.className='usr-item';a.href=u.url;
+      var av=document.createElement('span');av.className='usr-ava';av.textContent=u.name.slice(0,2);
+      if(u.avatar){var im=new Image();im.alt='';im.onload=function(){av.textContent='';av.appendChild(im);};im.src=u.avatar;}
+      var nm=document.createElement('span');nm.className='usr-name';nm.textContent='@'+u.name;
+      a.appendChild(av);a.appendChild(nm);box.appendChild(a);});
+  }
+  async function run(){
+    var q=clean(inp.value);if(inp.value!==q)inp.value=q;
+    if(q.length<2){box.textContent='';return [];}
+    var my=++seq;
+    try{var r=await fetch('/api/search?q='+encodeURIComponent(q));
+      if(my!==seq)return null;
+      if(r.status===429){note(tt().err);return null;}
+      var d=await r.json();var list=d.results||[];render(list);return list;
+    }catch(e){return null;}
+  }
+  inp.addEventListener('input',function(){clearTimeout(timer);timer=setTimeout(run,250);});
+  $('userSearchForm').addEventListener('submit',function(e){e.preventDefault();
+    run().then(function(list){if(list&&list.length){var q=clean(inp.value),ex=list.filter(function(u){return u.name===q;})[0];location.href=(ex||list[0]).url;}});});
+  var _sl=window.setLang;if(typeof _sl==='function'){window.setLang=function(l){_sl(l);labels();};}
+  labels();
+})();
+</script>
+
+<script>
+(function(){
+  var L={ar:{as:'مسجّل الدخول كـ',open:'ملفي',out:'خروج'},tr:{as:'Giriş yapıldı:',open:'PROFİLİM',out:'ÇIKIŞ'},en:{as:'Logged in as',open:'MY PROFILE',out:'LOG OUT'}};
+  function $(i){return document.getElementById(i);}
+  function tt(){return L[(typeof lang!=='undefined'&&L[lang])?lang:'ar'];}
+  var me=null;
+  function labels(){
+    if(!me)return;var t=tt(),txt=$('meText');txt.textContent=t.as+' ';
+    var b=document.createElement('b');b.textContent='@'+(me.display_name||'…');txt.appendChild(b);
+    $('meOpen').textContent=t.open;$('meOut').textContent=t.out;}
+  fetch('/api/me').then(function(r){return r.json();}).then(function(d){
+    if(!d.logged_in)return;me=d;
+    $('meOpen').href='/view/'+encodeURIComponent(d.entry_id);
+    $('meBanner').style.display='';labels();
+    /* oturum açıkken PIN kutusu gereksiz */
+    var t=document.querySelector('[data-i18n="sec_pin"]');if(t)t.style.display='none';
+    var f=document.getElementById('pinInput');f=f&&f.closest('form');if(f)f.style.display='none';
+  }).catch(function(){});
+  $('meOut').onclick=async function(){
+    try{await fetch('/api/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});}catch(e){}
+    location.reload();};
+  var _sl=window.setLang;if(typeof _sl==='function'){window.setLang=function(l){_sl(l);labels();};}
+})();
+</script>
+</body>
+</html>

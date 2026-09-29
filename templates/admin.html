@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="tr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Syne+Mono:wght@400&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080808;--surface:#101010;--surface2:#161616;--surface3:#1c1c1c;
+  --border:#1e1e1e;--border2:#2a2a2a;--border3:#333;
+  --accent:#d4ff47;--accent2:#ff5c35;--accent3:#34d399;--accent4:#60a5fa;
+  --text:#f4f4f4;--muted:#555;--muted2:#888;--muted3:#aaa;
+  --r-sm:8px;--r-md:12px;--r-lg:18px;--r-xl:24px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;min-height:100vh;overflow-x:hidden;font-size:15px;line-height:1.5;}
+
+/* GRID BG */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:60px 60px;opacity:.25;}
+
+/* ─── LOGIN SCREEN ─── */
+#loginScreen{
+  position:fixed;inset:0;z-index:1000;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg);padding:20px;
+}
+.login-box{
+  width:100%;max-width:400px;
+  background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-xl);
+  padding:48px 40px;position:relative;overflow:hidden;
+  animation:fadeUp .4s cubic-bezier(.16,1,.3,1);
+}
+.login-box::before{content:'';position:absolute;top:-1px;left:15%;right:15%;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.login-tag{display:inline-block;font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);border:1px solid rgba(212,255,71,.2);border-radius:100px;padding:4px 14px;margin-bottom:18px;}
+.login-title{font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:700;letter-spacing:-.03em;margin-bottom:6px;line-height:1;}
+.login-title em{font-style:italic;color:var(--accent);}
+.login-sub{font-family:'Space Mono',monospace;font-size:.65rem;color:var(--muted2);letter-spacing:.06em;margin-bottom:36px;}
+.login-label{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--accent);letter-spacing:.18em;text-transform:uppercase;margin-bottom:10px;display:block;font-weight:700;}
+.pin-wrap{
+  display:flex;align-items:center;gap:0;
+  background:var(--bg);border:2px solid var(--border2);border-radius:var(--r-md);overflow:hidden;
+  transition:border-color .2s,box-shadow .2s;margin-bottom:6px;
+}
+.pin-wrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 4px rgba(212,255,71,.09);}
+.pin-wrap.error{border-color:var(--accent2)!important;box-shadow:0 0 0 4px rgba(255,92,53,.09)!important;}
+.pin-icon{padding:0 16px;font-size:1.1rem;color:var(--muted);flex-shrink:0;}
+.pin-input{
+  flex:1;background:transparent;border:none;outline:none;
+  color:var(--accent);font-family:'Syne Mono',monospace;font-size:1.4rem;letter-spacing:.2em;
+  padding:16px 16px 16px 0;text-transform:uppercase;min-width:0;
+}
+.pin-input::placeholder{color:var(--muted);font-size:.95rem;letter-spacing:.06em;font-family:'Space Mono',monospace;}
+.login-err{font-family:'Space Mono',monospace;font-size:.68rem;color:var(--accent2);margin-bottom:14px;min-height:20px;display:none;padding:8px 12px;background:rgba(255,92,53,.07);border:1px solid rgba(255,92,53,.2);border-radius:8px;}
+.login-btn{
+  width:100%;padding:16px;background:var(--accent);color:var(--bg);
+  border:none;border-radius:var(--r-md);font-family:'Space Grotesk',sans-serif;
+  font-size:1rem;font-weight:700;cursor:pointer;transition:all .15s;letter-spacing:.02em;
+}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(212,255,71,.2);}
+.login-btn:active{transform:translateY(0);}
+.login-btn.busy{opacity:.5;pointer-events:none;}
+
+/* ─── MAIN LAYOUT ─── */
+#mainApp{display:none;position:relative;z-index:1;min-height:100vh;}
+
+/* TOP BAR */
+.topbar{
+  position:sticky;top:0;z-index:200;
+  background:rgba(8,8,8,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border2);
+  padding:14px 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  flex-wrap:wrap;
+}
+.topbar-left{display:flex;align-items:center;gap:16px;}
+.topbar-logo{font-family:'Space Mono',monospace;font-size:.75rem;color:var(--accent);letter-spacing:.15em;font-weight:700;}
+.topbar-divider{width:1px;height:20px;background:var(--border2);}
+.topbar-title{font-family:'Space Grotesk',sans-serif;font-size:.9rem;color:var(--muted2);font-weight:500;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.topbar-time{font-family:'Space Mono',monospace;font-size:.65rem;color:var(--muted);letter-spacing:.08em;}
+.refresh-btn{padding:8px 18px;background:var(--surface);border:1px solid var(--border2);border-radius:100px;color:var(--muted2);font-family:'Space Mono',monospace;font-size:.65rem;cursor:pointer;transition:all .15s;letter-spacing:.08em;}
+.refresh-btn:hover{border-color:var(--accent);color:var(--accent);}
+.logout-btn{padding:8px 18px;background:transparent;border:1px solid rgba(255,92,53,.3);border-radius:100px;color:var(--accent2);font-family:'Space Mono',monospace;font-size:.65rem;cursor:pointer;transition:all .15s;}
+.logout-btn:hover{background:rgba(255,92,53,.08);border-color:var(--accent2);}
+
+/* CONTENT */
+.content{max-width:1280px;margin:0 auto;padding:36px 28px 80px;}
+
+/* STATS GRID */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:36px;}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-lg);
+  padding:24px 26px;position:relative;overflow:hidden;
+  transition:border-color .2s,transform .15s;cursor:default;
+}
+.stat-card:hover{transform:translateY(-2px);border-color:var(--border3);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.stat-card.c-accent::before{background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.stat-card.c-blue::before{background:linear-gradient(90deg,transparent,var(--accent4),transparent);}
+.stat-card.c-green::before{background:linear-gradient(90deg,transparent,var(--accent3),transparent);}
+.stat-card.c-red::before{background:linear-gradient(90deg,transparent,var(--accent2),transparent);}
+.stat-card.c-purple::before{background:linear-gradient(90deg,transparent,#a78bfa,transparent);}
+.stat-icon{font-size:1.5rem;margin-bottom:12px;display:block;}
+.stat-num{font-family:'Syne Mono',monospace;font-size:2.2rem;font-weight:400;line-height:1;margin-bottom:4px;}
+.stat-card.c-accent .stat-num{color:var(--accent);}
+.stat-card.c-blue .stat-num{color:var(--accent4);}
+.stat-card.c-green .stat-num{color:var(--accent3);}
+.stat-card.c-red .stat-num{color:var(--accent2);}
+.stat-card.c-purple .stat-num{color:#a78bfa;}
+.stat-label{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--muted2);letter-spacing:.12em;text-transform:uppercase;}
+.stat-sub{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--muted);margin-top:6px;}
+
+/* SECTION HEADER */
+.section-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap;}
+.section-title{font-family:'Space Mono',monospace;font-size:.62rem;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;display:flex;align-items:center;gap:10px;}
+.section-title::after{content:'';width:40px;height:1px;background:var(--border2);}
+.section-count{font-family:'Syne Mono',monospace;font-size:.8rem;color:var(--accent);background:rgba(212,255,71,.08);border:1px solid rgba(212,255,71,.2);border-radius:100px;padding:3px 12px;}
+
+/* SEARCH + FILTER BAR */
+.toolbar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center;}
+.search-wrap{
+  flex:1;min-width:220px;
+  display:flex;align-items:center;gap:10px;
+  background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-md);
+  padding:10px 16px;transition:border-color .2s;
+}
+.search-wrap:focus-within{border-color:var(--border3);}
+.search-icon{color:var(--muted);font-size:1rem;flex-shrink:0;}
+.search-input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:.9rem;}
+.search-input::placeholder{color:var(--muted);}
+.filter-btn{padding:10px 18px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-md);color:var(--muted2);font-family:'Space Mono',monospace;font-size:.65rem;cursor:pointer;transition:all .15s;white-space:nowrap;letter-spacing:.06em;}
+.filter-btn:hover,.filter-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(212,255,71,.06);}
+.sort-select{padding:10px 14px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-md);color:var(--muted2);font-family:'Space Mono',monospace;font-size:.65rem;cursor:pointer;outline:none;transition:border-color .2s;}
+.sort-select:focus{border-color:var(--border3);}
+
+/* USER CARDS */
+.users-list{display:flex;flex-direction:column;gap:12px;}
+.user-card{
+  background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-lg);
+  overflow:hidden;transition:border-color .2s,box-shadow .15s;
+}
+.user-card:hover{border-color:var(--border3);box-shadow:0 4px 24px rgba(0,0,0,.4);}
+.user-card.expanded{border-color:#383838;}
+.user-card-header{
+  display:flex;align-items:center;gap:16px;padding:18px 22px;
+  cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;
+}
+.user-card-header:hover .expand-icon{opacity:1;}
+
+/* AVATAR */
+.u-avatar{
+  width:46px;height:46px;border-radius:50%;
+  background:var(--bg);border:2px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.2rem;flex-shrink:0;color:var(--muted);overflow:hidden;
+  position:relative;
+}
+.u-avatar img{width:100%;height:100%;object-fit:cover;}
+.u-avatar-dot{
+  position:absolute;bottom:1px;right:1px;
+  width:11px;height:11px;border-radius:50%;
+  border:2px solid var(--surface);
+  background:var(--border2);
+}
+.u-avatar-dot.active{background:var(--accent3);}
+.u-avatar-dot.owner-active{background:var(--accent);}
+
+/* USER INFO */
+.u-info{flex:1;min-width:0;}
+.u-name-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px;}
+.u-display-name{font-family:'Syne Mono',monospace;font-size:1rem;color:var(--accent);font-weight:400;letter-spacing:.04em;}
+.u-display-name::before{content:'@';opacity:.5;font-size:.85rem;}
+.u-id{font-family:'Space Mono',monospace;font-size:.65rem;color:var(--muted2);letter-spacing:.1em;}
+.u-text-preview{font-size:.82rem;color:var(--muted3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-family:'Space Mono',monospace;font-size:.58rem;font-weight:700;letter-spacing:.06em;white-space:nowrap;}
+.badge-green{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);color:var(--accent3);}
+.badge-yellow{background:rgba(212,255,71,.08);border:1px solid rgba(212,255,71,.2);color:var(--accent);}
+.badge-red{background:rgba(255,92,53,.08);border:1px solid rgba(255,92,53,.25);color:var(--accent2);}
+.badge-blue{background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.25);color:var(--accent4);}
+.badge-muted{background:rgba(85,85,85,.15);border:1px solid var(--border2);color:var(--muted2);}
+.badge-purple{background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.25);color:#a78bfa;}
+
+/* STATS ROW */
+.u-stats{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.u-stat{font-family:'Space Mono',monospace;font-size:.62rem;color:var(--muted2);display:flex;align-items:center;gap:4px;padding:4px 10px;background:var(--bg);border:1px solid var(--border);border-radius:100px;}
+.u-stat .n{color:var(--text);font-weight:700;font-family:'Syne Mono',monospace;}
+
+.expand-icon{margin-left:auto;color:var(--muted);font-size:.8rem;transition:transform .25s,opacity .2s;opacity:.5;flex-shrink:0;}
+.user-card.expanded .expand-icon{transform:rotate(180deg);opacity:1;}
+
+/* EXPANDED DETAIL */
+.user-detail{
+  display:none;border-top:1px solid var(--border);
+  padding:22px 22px 22px 22px;
+  animation:detailOpen .2s ease;
+}
+@keyframes detailOpen{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.user-card.expanded .user-detail{display:block;}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;}
+.detail-section{background:var(--bg);border:1px solid var(--border2);border-radius:var(--r-md);padding:16px 18px;}
+.detail-sec-title{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.detail-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:.82rem;}
+.detail-row:last-child{border-bottom:none;padding-bottom:0;}
+.detail-key{color:var(--muted2);font-family:'Space Mono',monospace;font-size:.65rem;flex-shrink:0;}
+.detail-val{color:var(--text);font-family:'Space Mono',monospace;font-size:.72rem;text-align:right;word-break:break-all;}
+.detail-val.accent{color:var(--accent);}
+.detail-val.green{color:var(--accent3);}
+.detail-val.red{color:var(--accent2);}
+.detail-val.blue{color:var(--accent4);}
+
+/* PIN REVEAL */
+.pin-reveal-wrap{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.pin-masked{font-family:'Syne Mono',monospace;font-size:.95rem;color:var(--accent);letter-spacing:.18em;}
+.pin-reveal-btn{padding:3px 10px;border-radius:6px;background:rgba(212,255,71,.08);border:1px solid rgba(212,255,71,.2);color:var(--accent);font-size:.6rem;font-family:'Space Mono',monospace;cursor:pointer;transition:all .15s;}
+.pin-reveal-btn:hover{background:rgba(212,255,71,.18);}
+.copy-btn{padding:3px 10px;border-radius:6px;background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);color:var(--accent4);font-size:.6rem;font-family:'Space Mono',monospace;cursor:pointer;transition:all .15s;}
+.copy-btn:hover{background:rgba(96,165,250,.18);}
+
+/* SOCIAL CHIPS */
+.social-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.social-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:100px;font-size:.68rem;font-family:'Space Mono',monospace;}
+.sc-instagram{background:rgba(225,48,108,.08);border:1px solid rgba(225,48,108,.2);color:#e1306c;}
+.sc-twitter{background:rgba(255,255,255,.05);border:1px solid #333;color:#ccc;}
+.sc-tiktok{background:rgba(255,0,80,.07);border:1px solid rgba(255,0,80,.2);color:#ff0050;}
+.sc-youtube{background:rgba(255,0,0,.07);border:1px solid rgba(255,0,0,.2);color:#ff0000;}
+.sc-whatsapp{background:rgba(37,211,102,.07);border:1px solid rgba(37,211,102,.2);color:#25d366;}
+
+/* ACTION BUTTONS */
+.detail-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;}
+.action-btn{padding:9px 18px;border-radius:var(--r-sm);font-family:'Space Mono',monospace;font-size:.68rem;font-weight:700;cursor:pointer;transition:all .15s;letter-spacing:.06em;border:1px solid;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
+.action-btn.visit{background:rgba(212,255,71,.08);border-color:rgba(212,255,71,.3);color:var(--accent);}
+.action-btn.visit:hover{background:rgba(212,255,71,.15);}
+.action-btn.delete{background:rgba(255,92,53,.06);border-color:rgba(255,92,53,.25);color:var(--accent2);}
+.action-btn.delete:hover{background:rgba(255,92,53,.15);}
+.action-btn.copy-link{background:rgba(96,165,250,.07);border-color:rgba(96,165,250,.25);color:var(--accent4);}
+.action-btn.copy-link:hover{background:rgba(96,165,250,.15);}
+
+/* OWNER VISIT TIME */
+.last-visit{font-family:'Space Mono',monospace;font-size:.62rem;}
+.last-visit.fresh{color:var(--accent);}
+.last-visit.recent{color:var(--accent3);}
+.last-visit.old{color:var(--muted2);}
+.last-visit.never{color:var(--muted);}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:80px 20px;color:var(--muted);}
+.empty-state-icon{font-size:3rem;margin-bottom:14px;display:block;opacity:.4;}
+.empty-state-txt{font-family:'Space Mono',monospace;font-size:.75rem;letter-spacing:.1em;}
+
+/* LOADING */
+.loading-state{text-align:center;padding:60px;color:var(--muted2);}
+.spinner{width:28px;height:28px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--surface);border:1px solid var(--border2);border-radius:100px;
+  padding:10px 22px;font-family:'Space Mono',monospace;font-size:.72rem;color:var(--accent);
+  opacity:0;transition:all .3s;pointer-events:none;z-index:9999;white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px;}
+
+/* RESPONSIVE */
+@media(max-width:600px){
+  .topbar{padding:12px 16px;}
+  .content{padding:24px 14px 60px;}
+  .user-card-header{padding:14px 16px;gap:12px;}
+  .user-detail{padding:16px;}
+  .stat-card{padding:18px 20px;}
+  .stat-num{font-size:1.8rem;}
+}
+
+/* PIN DOT INDICATOR */
+.pin-attempts-row{display:flex;gap:5px;margin-top:10px;}
+.p-dot{width:9px;height:9px;border-radius:50%;background:var(--border2);transition:background .3s;}
+.p-dot.fail{background:var(--accent2);}
+
+/* OWNER ACTIVE PULSE */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.u-avatar-dot.active{animation:pulse 2s ease-in-out infinite;}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <span class="login-tag">🔐 ADMIN ACCESS</span>
+    <h1 class="login-title">QR <em>Admin</em></h1>
+    <p class="login-sub">// RESTRICTED PANEL — AUTHORIZED ONLY</p>
+
+    <label class="login-label" for="adminPinInput">Admin PIN</label>
+    <div class="pin-wrap" id="pinWrap">
+      <span class="pin-icon">🔑</span>
+      <input class="pin-input" id="adminPinInput" type="password" maxlength="8"
+             placeholder="XXXXXXXX" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+    <div class="pin-attempts-row" id="pinDots">
+      <div class="p-dot" id="d1"></div>
+      <div class="p-dot" id="d2"></div>
+      <div class="p-dot" id="d3"></div>
+    </div>
+    <div class="login-err" id="loginErr"></div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">GİRİŞ YAP →</button>
+  </div>
+</div>
+
+<!-- ═══════════════ MAIN APP ═══════════════ -->
+<div id="mainApp">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-logo">QR·ADMIN</span>
+      <div class="topbar-divider"></div>
+      <span class="topbar-title">Kullanıcı Yönetim Paneli</span>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-time" id="liveTime"></span>
+      <button class="refresh-btn" onclick="loadData()">↻ YENILE</button>
+      <button class="logout-btn" onclick="doLogout()">ÇIKIŞ</button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- STATS -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card c-accent">
+        <span class="stat-icon">👤</span>
+        <div class="stat-num" id="s-total">—</div>
+        <div class="stat-label">Toplam Kullanıcı</div>
+        <div class="stat-sub">Oluşturulan QR profil</div>
+      </div>
+      <div class="stat-card c-blue">
+        <span class="stat-icon">👁</span>
+        <div class="stat-num" id="s-views">—</div>
+        <div class="stat-label">Toplam Görüntülenme</div>
+        <div class="stat-sub">Tüm profiller</div>
+      </div>
+      <div class="stat-card c-green">
+        <span class="stat-icon">💬</span>
+        <div class="stat-num" id="s-replies">—</div>
+        <div class="stat-label">Toplam Yorum</div>
+        <div class="stat-sub">Bırakılan mesajlar</div>
+      </div>
+      <div class="stat-card c-red">
+        <span class="stat-icon">🔥</span>
+        <div class="stat-num" id="s-active">—</div>
+        <div class="stat-label">Aktif (24 saat)</div>
+        <div class="stat-sub">Profil ziyaret alan</div>
+      </div>
+      <div class="stat-card c-purple">
+        <span class="stat-icon">🛡</span>
+        <div class="stat-num" id="s-owner">—</div>
+        <div class="stat-label">Sahip Aktif (24s)</div>
+        <div class="stat-sub">Owner mod ziyareti</div>
+      </div>
+      <div class="stat-card c-red">
+        <span class="stat-icon">⏳</span>
+        <div class="stat-num" id="s-pending">—</div>
+        <div class="stat-label">Aktivasyon Bekliyor</div>
+        <div class="stat-sub">Kod girilmemiş hesap</div>
+      </div>
+    </div>
+
+    <!-- ═══ ÖDEME KODLARI ═══ -->
+    <div style="margin-bottom:40px;">
+      <div class="section-header">
+        <div class="section-title">💳 Ödeme Erişim Kodları</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span id="codeCount" style="font-family:'Syne Mono',monospace;font-size:.8rem;color:var(--accent);background:rgba(212,255,71,.08);border:1px solid rgba(212,255,71,.2);border-radius:100px;padding:3px 12px;">0 kod</span>
+          <button onclick="deleteUsedCodes()"
+            style="padding:5px 16px;background:transparent;border:1px solid rgba(255,92,53,.35);border-radius:100px;color:var(--accent2);font-family:'Space Mono',monospace;font-size:.6rem;cursor:pointer;transition:all .15s;letter-spacing:.06em;"
+            onmouseover="this.style.background='rgba(255,92,53,.10)'" onmouseout="this.style.background=''">
+            🗑 KULLANILANLAR SİL
+          </button>
+        </div>
+      </div>
+
+      <!-- Üret kutusu -->
+      <div style="background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:22px;margin-bottom:16px;">
+        <div style="font-family:'Space Mono',monospace;font-size:.6rem;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-bottom:14px;">// Yeni Kod Üret</div>
+        <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+          <div style="flex:1;min-width:180px;">
+            <div style="font-family:'Space Mono',monospace;font-size:.58rem;color:var(--muted);letter-spacing:.1em;margin-bottom:6px;">Not (opsiyonel)</div>
+            <input id="codeNoteInput" type="text" maxlength="60"
+              placeholder="örn: Müşteri adı, sipariş no…"
+              style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:.9rem;padding:11px 14px;outline:none;transition:border-color .18s;"
+              onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border2)'">
+          </div>
+          <div>
+            <div style="font-family:'Space Mono',monospace;font-size:.58rem;color:var(--muted);letter-spacing:.1em;margin-bottom:6px;">Adet</div>
+            <input id="codeCountInput" type="number" min="1" max="20" value="1"
+              style="width:70px;background:var(--bg);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:'Syne Mono',monospace;font-size:1rem;padding:11px 10px;outline:none;text-align:center;transition:border-color .18s;"
+              onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border2)'">
+          </div>
+          <button onclick="generateCodes()"
+            style="padding:12px 28px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-family:'Space Mono',monospace;font-size:.75rem;font-weight:700;letter-spacing:.08em;cursor:pointer;transition:all .15s;white-space:nowrap;"
+            onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 20px rgba(212,255,71,.25)'"
+            onmouseout="this.style.transform='';this.style.boxShadow=''">
+            + ÜRET
+          </button>
+        </div>
+
+        <!-- Yeni üretilen kodlar -->
+        <div id="newCodesBox" style="display:none;margin-top:18px;">
+          <div style="font-family:'Space Mono',monospace;font-size:.58rem;color:var(--accent);letter-spacing:.12em;margin-bottom:10px;">✓ ÜRETİLEN KODLAR — müşteriye gönder:</div>
+          <div id="newCodesList" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+        </div>
+      </div>
+
+      <!-- Kod listesi -->
+      <div id="codesContainer">
+        <div style="font-family:'Space Mono',monospace;font-size:.65rem;color:var(--muted);text-align:center;padding:28px;">Henüz kod yok.</div>
+      </div>
+    </div>
+
+    <!-- USER LIST -->
+    <div class="section-header">
+      <div class="section-title">Kullanıcılar</div>
+      <span class="section-count" id="listCount">0 kayıt</span>
+    </div>
+
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="searchInput" placeholder="İsim, ID, telefon, @instagram, @tiktok, @twitter ara…" oninput="filterUsers()">
+      </div>
+      <button class="filter-btn active" id="f-all" onclick="setFilter('all',this)">Tümü</button>
+      <button class="filter-btn" id="f-active" onclick="setFilter('active',this)">🔥 Aktif</button>
+      <button class="filter-btn" id="f-owner" onclick="setFilter('owner',this)">🛡 Sahip Aktif</button>
+      <button class="filter-btn" id="f-hasname" onclick="setFilter('hasname',this)">@ İsimli</button>
+      <button class="filter-btn" id="f-pending" onclick="setFilter('pending',this)">⏳ Bekliyor</button>
+      <select class="sort-select" id="sortSelect" onchange="filterUsers()">
+        <option value="newest">↓ En Yeni</option>
+        <option value="oldest">↑ En Eski</option>
+        <option value="views">↓ En Çok Görüntülenen</option>
+        <option value="replies">↓ En Çok Yorumlanan</option>
+        <option value="owner">↓ Sahip Son Aktif</option>
+      </select>
+    </div>
+
+    <div id="usersContainer">
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <div style="font-family:'Space Mono',monospace;font-size:.7rem;color:var(--muted);letter-spacing:.1em;">VERİ YÜKLENİYOR…</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══ STATE ═══
+let adminToken = sessionStorage.getItem('adminToken') || '';
+let allUsers   = [];
+let activeFilter = 'all';
+let failCount  = 0;
+
+// ═══ LOGIN ═══
+document.getElementById('adminPinInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+async function doLogin() {
+  const pin = document.getElementById('adminPinInput').value.trim().toUpperCase();
+  const btn = document.getElementById('loginBtn');
+  const err = document.getElementById('loginErr');
+  const wrap = document.getElementById('pinWrap');
+
+  if (!pin) return;
+  btn.classList.add('busy');
+  btn.textContent = 'Doğrulanıyor…';
+  err.style.display = 'none';
+  wrap.classList.remove('error');
+
+  try {
+    const res  = await fetch('/api/admin/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin })
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.ok) {
+      failCount++;
+      const dot = document.getElementById('d' + Math.min(failCount, 3));
+      if (dot) dot.classList.add('fail');
+      wrap.classList.add('error');
+      err.textContent = failCount >= 3
+        ? '⛔ Çok fazla yanlış deneme. Sayfayı yenileyin.'
+        : `❌ Yanlış PIN. (${failCount}/3)`;
+      err.style.display = 'block';
+      document.getElementById('adminPinInput').value = '';
+      btn.classList.remove('busy');
+      btn.textContent = 'GİRİŞ YAP →';
+      return;
+    }
+
+    adminToken = data.token;
+    sessionStorage.setItem('adminToken', adminToken);
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    startClock();
+    loadData();
+
+  } catch (e) {
+    err.textContent = '⚠ Bağlantı hatası.';
+    err.style.display = 'block';
+    btn.classList.remove('busy');
+    btn.textContent = 'GİRİŞ YAP →';
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem('adminToken');
+  adminToken = '';
+  location.reload();
+}
+
+// ═══ AUTO-LOGIN (token varsa) ═══
+if (adminToken) {
+  (async () => {
+    const res = await fetch('/api/admin/data', {
+      headers: { 'X-Admin-Token': adminToken }
+    }).catch(() => null);
+    if (res && res.ok) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'block';
+      startClock();
+      loadData();
+    } else {
+      sessionStorage.removeItem('adminToken');
+      adminToken = '';
+    }
+  })();
+}
+
+// ═══ CLOCK ═══
+function startClock() {
+  const el = document.getElementById('liveTime');
+  function tick() {
+    const now = new Date();
+    el.textContent = now.toLocaleString('tr-TR', {
+      day:'2-digit', month:'2-digit', year:'numeric',
+      hour:'2-digit', minute:'2-digit', second:'2-digit'
+    });
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+// ═══ LOAD DATA ═══
+async function loadData() {
+  document.getElementById('usersContainer').innerHTML = `
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <div style="font-family:'Space Mono',monospace;font-size:.7rem;color:var(--muted);letter-spacing:.1em;">VERİ YÜKLENİYOR…</div>
+    </div>`;
+
+  try {
+    const res  = await fetch('/api/admin/data', {
+      headers: { 'X-Admin-Token': adminToken }
+    });
+    if (res.status === 403) { doLogout(); return; }
+    const data = await res.json();
+
+    // Stats
+    document.getElementById('s-total').textContent   = data.stats.total_entries;
+    document.getElementById('s-views').textContent   = fmtNum(data.stats.total_views);
+    document.getElementById('s-replies').textContent = data.stats.total_replies;
+    document.getElementById('s-active').textContent  = data.stats.active_24h;
+    document.getElementById('s-owner').textContent   = data.stats.owner_active_24h;
+    const pendingCount = (data.entries || []).filter(e => !e.is_activated).length;
+    document.getElementById('s-pending').textContent = pendingCount;
+
+    allUsers = data.entries;
+    filterUsers();
+    loadCodes();
+
+
+  } catch(e) {
+    document.getElementById('usersContainer').innerHTML =
+      `<div class="empty-state"><span class="empty-state-icon">⚠</span><div class="empty-state-txt">VERİ YÜKLENEMEDİ</div></div>`;
+  }
+}
+
+// ═══ FILTER & SORT ═══
+function setFilter(f, el) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  filterUsers();
+}
+
+function filterUsers() {
+  const q    = (document.getElementById('searchInput').value || '').toLowerCase();
+  const sort = document.getElementById('sortSelect').value;
+  const now  = new Date();
+  const h24  = new Date(now - 86400000).toISOString();
+
+  let list = [...allUsers];
+
+  // Filter
+  if (activeFilter === 'active')  list = list.filter(u => u.views_24h > 0);
+  if (activeFilter === 'owner')   list = list.filter(u => u.last_owner_visit && u.last_owner_visit > h24);
+  if (activeFilter === 'hasname') list = list.filter(u => u.display_name);
+  if (activeFilter === 'pending') list = list.filter(u => !u.is_activated);
+
+  // Search
+  if (q) {
+    const qClean = q.replace(/\s/g,'').replace(/^@/,'');
+    list = list.filter(u => {
+      const s = u.socials || {};
+      return (
+        u.id.includes(q) ||
+        (u.display_name && u.display_name.toLowerCase().includes(q)) ||
+        u.text.toLowerCase().includes(q) ||
+        (s.whatsapp  && s.whatsapp.includes(qClean)) ||
+        (s.instagram && s.instagram.toLowerCase().includes(qClean)) ||
+        (s.twitter   && s.twitter.toLowerCase().includes(qClean)) ||
+        (s.tiktok    && s.tiktok.toLowerCase().includes(qClean))
+      );
+    });
+  }
+
+  // Sort
+  if (sort === 'oldest')  list.sort((a,b) => a.created_at.localeCompare(b.created_at));
+  else if (sort === 'views')  list.sort((a,b) => b.view_count - a.view_count);
+  else if (sort === 'replies') list.sort((a,b) => b.reply_count - a.reply_count);
+  else if (sort === 'owner')  list.sort((a,b) => {
+    if (!a.last_owner_visit) return 1;
+    if (!b.last_owner_visit) return -1;
+    return b.last_owner_visit.localeCompare(a.last_owner_visit);
+  });
+  else list.sort((a,b) => b.created_at.localeCompare(a.created_at));
+
+  document.getElementById('listCount').textContent = list.length + ' kayıt';
+
+  if (!list.length) {
+    document.getElementById('usersContainer').innerHTML =
+      `<div class="empty-state"><span class="empty-state-icon">🫥</span><div class="empty-state-txt">KAYIT BULUNAMADI</div></div>`;
+    return;
+  }
+
+  document.getElementById('usersContainer').innerHTML =
+    '<div class="users-list">' + list.map(u => renderCard(u)).join('') + '</div>';
+}
+
+// ═══ RENDER CARD ═══
+function renderCard(u) {
+  const now   = new Date();
+  const h24   = new Date(now - 86400000).toISOString();
+  const h1    = new Date(now - 3600000).toISOString();
+
+  const isActive24h   = u.views_24h > 0;
+  const ownerActive24h = u.last_owner_visit && u.last_owner_visit > h24;
+  const ownerActive1h  = u.last_owner_visit && u.last_owner_visit > h1;
+
+  // Avatar dot
+  let dotClass = '';
+  if (ownerActive1h) dotClass = 'active owner-active';
+  else if (ownerActive24h) dotClass = 'active owner-active';
+  else if (isActive24h) dotClass = 'active';
+
+  // Avatar
+  const avatarHtml = u.has_profile_image
+    ? `<img src="" alt="pfp" style="display:none" onerror="this.style.display='none'">👤`
+    : `👤`;
+
+  // Badges
+  let badges = '';
+  if (!u.display_name) badges += `<span class="badge badge-muted">no @name</span>`;
+  if (!u.is_activated) badges += `<span class="badge badge-red">⏳ aktivasyon bekliyor</span>`;
+  if (u.is_activated)  badges += `<span class="badge badge-green">✅ aktif</span>`;
+  if (isActive24h)      badges += `<span class="badge badge-red">🔥 aktif</span>`;
+  if (ownerActive24h)   badges += `<span class="badge badge-yellow">🛡 sahip aktif</span>`;
+  if (!u.comments_enabled) badges += `<span class="badge badge-muted">💬 kpalı</span>`;
+  if (u.has_profile_image)  badges += `<span class="badge badge-blue">🖼 foto</span>`;
+  const socCount = Object.keys(u.socials || {}).length;
+  if (socCount > 0) badges += `<span class="badge badge-purple">🔗 ${socCount} sosyal</span>`;
+
+  // Visitor time
+  const visitHtml = fmtOwnerVisit(u.last_owner_visit);
+
+  return `
+  <div class="user-card" id="card-${u.id}">
+    <div class="user-card-header" onclick="toggleCard('${u.id}')">
+      <div class="u-avatar">
+        ${avatarHtml}
+        ${dotClass ? `<div class="u-avatar-dot ${dotClass}"></div>` : ''}
+      </div>
+      <div class="u-info">
+        <div class="u-name-row">
+          ${u.display_name
+            ? `<span class="u-display-name">${esc(u.display_name)}</span>`
+            : `<span class="u-id">${u.id}</span>`}
+          ${u.display_name ? `<span class="u-id">&nbsp;·&nbsp;${u.id}</span>` : ''}
+          ${badges}
+        </div>
+        <div class="u-text-preview">${esc(u.text_preview)}</div>
+      </div>
+      <div class="u-stats" style="flex-direction:column;align-items:flex-end;gap:5px;margin-right:6px;">
+        <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
+          <div class="u-stat">👁 <span class="n">${fmtNum(u.view_count)}</span></div>
+          <div class="u-stat">💬 <span class="n">${u.reply_count}</span></div>
+          ${u.views_24h > 0 ? `<div class="u-stat">24s <span class="n" style="color:var(--accent2)">${u.views_24h}</span></div>` : ''}
+        </div>
+        ${(() => {
+          const s = u.socials || {};
+          const chips = [
+            s.whatsapp  ? `<span style="color:#25d366;">📱 ${esc(s.whatsapp)}</span>` : '',
+            s.instagram ? `<span style="color:#e1306c;">📸 ${esc(s.instagram)}</span>` : '',
+            s.twitter   ? `<span style="color:#1da1f2;">𝕏 ${esc(s.twitter)}</span>` : '',
+            s.tiktok    ? `<span style="color:#ee1d52;">🎵 ${esc(s.tiktok)}</span>` : '',
+          ].filter(Boolean);
+          return chips.length ? `<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">${chips.map(c=>`<div style="font-family:'Syne Mono',monospace;font-size:.63rem;letter-spacing:.04em;">${c}</div>`).join('')}</div>` : '';
+        })()}
+        <div class="${visitHtml.cls}" style="font-size:.58rem;">${visitHtml.txt}</div>
+      </div>
+      <span class="expand-icon">▼</span>
+    </div>
+
+    <div class="user-detail">
+      <div class="detail-grid">
+
+        <!-- GENEL BİLGİ -->
+        <div class="detail-section">
+          <div class="detail-sec-title">👤 Profil Bilgisi</div>
+          <div class="detail-row">
+            <span class="detail-key">ID</span>
+            <span class="detail-val accent">${u.id}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-key">Kullanıcı Adı</span>
+            <span class="detail-val ${u.display_name ? 'accent' : 'red'}">${u.display_name ? '@' + esc(u.display_name) : '(yok)'}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-key">Aktivasyon</span>
+            <span class="detail-val ${u.is_activated ? 'green' : 'red'}">${u.is_activated ? '✅ Aktif' : '⏳ Bekliyor'}</span>
+          </div>
+          ${u.activated_at ? `<div class="detail-row">
+            <span class="detail-key">Aktif Edilme</span>
+            <span class="detail-val">${fmtDate(u.activated_at)}</span>
+          </div>` : ''}
+          <div class="detail-row">
+            <span class="detail-key">Oluşturulma</span>
+            <span class="detail-val">${fmtDate(u.created_at)}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-key">Yorumlar</span>
+            <span class="detail-val ${u.comments_enabled ? 'green' : 'red'}">${u.comments_enabled ? '✅ Açık' : '🚫 Kapalı'}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-key">Profil Fotoğrafı</span>
+            <span class="detail-val ${u.has_profile_image ? 'green' : ''}">${u.has_profile_image ? '✅ Var' : '—'}</span>
+          </div>
+        </div>
+
+        <!-- İSTATİSTİK -->
+        <div class="detail-section">
+          <div class="detail-sec-title">📊 İstatistikler</div>
+          <div class="detail-row">
+            <span class="detail-key">Toplam Görüntülenme</span>
+            <span class="detail-val blue">${fmtNum(u.view_count)}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-key">Son 24 Saat Görüntüleme</span>
+            <span class="detail-val ${u.views_24h > 0 ? 'red' : ''}">${u.views_24h}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-key">Son 7 Gün Görüntüleme</span>
+            <span class="detail-val">${u.views_7d}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-key">Toplam Yorum</span>
+            <span class="detail-val">${u.reply_count}</span>
+          </div>
+        </div>
+
+        <!-- SAHİP / GÜVENLİK -->
+        <div class="detail-section">
+          <div class="detail-sec-title">🔐 Sahip & Güvenlik</div>
+          <div class="detail-row">
+            <span class="detail-key">Sahip PIN</span>
+            <div class="pin-reveal-wrap">
+              <span class="pin-masked" id="pin-${u.id}">••••••••</span>
+              <button class="pin-reveal-btn" onclick="revealPin('${u.id}','${esc(u.owner_pin)}')">GÖR</button>
+              <button class="copy-btn" onclick="copyText('${esc(u.owner_pin)}','PIN kopyalandı')">KOP</button>
+            </div>
+          </div>
+          <div class="detail-row">
+            <span class="detail-key">Son Sahip Girişi</span>
+            <span class="detail-val ${fmtOwnerVisit(u.last_owner_visit).detailCls}">${fmtOwnerVisit(u.last_owner_visit).full}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-key">24s Sahip Aktif</span>
+            <span class="detail-val ${u.last_owner_visit && u.last_owner_visit > new Date(Date.now()-86400000).toISOString() ? 'green' : 'red'}">
+              ${u.last_owner_visit && u.last_owner_visit > new Date(Date.now()-86400000).toISOString() ? '✅ Evet' : '❌ Hayır'}
+            </span>
+          </div>
+        </div>
+
+        <!-- SOSYAL MEDYA -->
+        ${Object.keys(u.socials||{}).length > 0 ? `
+        <div class="detail-section">
+          <div class="detail-sec-title">🔗 Sosyal Medya</div>
+          <div class="social-chips">
+            ${u.socials.instagram ? `<span class="social-chip sc-instagram">📸 ${esc(u.socials.instagram)}</span>` : ''}
+            ${u.socials.twitter   ? `<span class="social-chip sc-twitter">🐦 ${esc(u.socials.twitter)}</span>` : ''}
+            ${u.socials.tiktok    ? `<span class="social-chip sc-tiktok">🎵 ${esc(u.socials.tiktok)}</span>` : ''}
+            ${u.socials.youtube   ? `<span class="social-chip sc-youtube">▶ ${esc(u.socials.youtube)}</span>` : ''}
+            ${u.socials.whatsapp  ? `<span class="social-chip sc-whatsapp">💬 ${esc(u.socials.whatsapp)}</span>` : ''}
+          </div>
+        </div>` : ''}
+
+        <!-- MESAJ -->
+        <div class="detail-section" style="grid-column:1/-1">
+          <div class="detail-sec-title">✉️ Profil Metni</div>
+          <div style="font-size:.85rem;line-height:1.7;color:var(--muted3);white-space:pre-wrap;word-break:break-word;padding:4px 0;">
+            ${esc(u.text)}
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="detail-actions">
+        <a class="action-btn visit" href="/view/${u.id}" target="_blank">🔗 Profili Ziyaret Et</a>
+        <a class="action-btn visit" href="/view/${u.id}?pin=${esc(u.owner_pin)}" target="_blank">🛡 Sahip Modu</a>
+        <button class="action-btn copy-link" onclick="copyText(location.origin+'/view/${u.id}','Link kopyalandı')">📋 Linki Kopyala</button>
+        <button class="action-btn delete" onclick="deleteUser('${u.id}')">🗑 Kullanıcıyı Sil</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ═══ TOGGLE CARD ═══
+function toggleCard(id) {
+  const card = document.getElementById('card-' + id);
+  card.classList.toggle('expanded');
+}
+
+// ═══ HELPERS ═══
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtNum(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+  return String(n);
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  try {
+    return new Date(iso).toLocaleString('tr-TR', {
+      day:'2-digit', month:'2-digit', year:'numeric',
+      hour:'2-digit', minute:'2-digit'
+    });
+  } catch { return iso; }
+}
+
+function fmtOwnerVisit(iso) {
+  if (!iso) return { txt: 'Hiç girmedi', full: 'Hiç girmedi', cls: 'last-visit never', detailCls: 'red' };
+
+  const now   = new Date();
+  const then  = new Date(iso);
+  const diff  = now - then;
+  const mins  = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days  = Math.floor(diff / 86400000);
+
+  let txt, full, cls, detailCls;
+  full = fmtDate(iso);
+
+  if (mins < 5)       { txt = '🟢 Az önce';          cls = 'last-visit fresh';   detailCls = 'accent'; }
+  else if (mins < 60) { txt = `🟢 ${mins}dk önce`;   cls = 'last-visit fresh';   detailCls = 'accent'; }
+  else if (hours < 24){ txt = `🟡 ${hours}s önce`;   cls = 'last-visit recent';  detailCls = 'green'; }
+  else if (days < 7)  { txt = `⚪ ${days}g önce`;    cls = 'last-visit old';     detailCls = ''; }
+  else                { txt = `⚫ ${days}g önce`;    cls = 'last-visit old';     detailCls = 'red'; }
+
+  return { txt, full, cls, detailCls };
+}
+
+function revealPin(id, pin) {
+  const el  = document.getElementById('pin-' + id);
+  const btn = el.nextElementSibling;
+  if (el.textContent === '••••••••') {
+    el.textContent = pin;
+    btn.textContent = 'GİZLE';
+  } else {
+    el.textContent = '••••••••';
+    btn.textContent = 'GÖR';
+  }
+}
+
+function copyText(text, msg) {
+  navigator.clipboard.writeText(text).then(() => toast(msg || 'Kopyalandı ✓'));
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ═══ DELETE ═══
+async function deleteUser(id) {
+  if (!confirm(`"${id}" kullanıcısını kalıcı olarak silmek istediğinize emin misiniz?\n\nBu işlem geri alınamaz!`)) return;
+  try {
+    const res = await fetch('/api/admin/delete/' + id, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Token': adminToken },
+      body: '{}'
+    });
+    if (res.ok) {
+      allUsers = allUsers.filter(u => u.id !== id);
+      filterUsers();
+      toast('✅ Kullanıcı silindi');
+    } else {
+      toast('❌ Silme başarısız');
+    }
+  } catch(e) {
+    toast('⚠ Bağlantı hatası');
+  }
+}
+
+// ═══ ÖDEME KODLARI ═══
+async function generateCodes() {
+  const note  = (document.getElementById('codeNoteInput').value || '').trim();
+  const count = parseInt(document.getElementById('codeCountInput').value) || 1;
+  try {
+    const res  = await fetch('/api/admin/gen-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Token': adminToken },
+      body: JSON.stringify({ note, count })
+    });
+    const data = await res.json();
+    if (!res.ok) { toast('❌ ' + (data.error || 'Hata')); return; }
+
+    // Yeni kodları göster
+    const box  = document.getElementById('newCodesBox');
+    const list = document.getElementById('newCodesList');
+    box.style.display = 'block';
+    list.innerHTML = data.codes.map(code => `
+      <div style="display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid rgba(212,255,71,.3);border-radius:10px;padding:10px 14px;">
+        <span style="font-family:'Syne Mono',monospace;font-size:1.5rem;color:var(--accent);letter-spacing:.2em;">${code}</span>
+        <button onclick="copyText('${code}','Kod kopyalandı ✓')"
+          style="padding:5px 12px;background:rgba(212,255,71,.1);border:1px solid rgba(212,255,71,.3);border-radius:7px;color:var(--accent);font-family:'Space Mono',monospace;font-size:.62rem;cursor:pointer;white-space:nowrap;">
+          📋 KOPYALA
+        </button>
+      </div>
+    `).join('');
+
+    document.getElementById('codeNoteInput').value = '';
+    document.getElementById('codeCountInput').value = '1';
+    toast('✅ ' + data.codes.length + ' kod üretildi');
+    loadCodes();
+  } catch(e) {
+    toast('⚠ Bağlantı hatası');
+  }
+}
+
+async function loadCodes() {
+  try {
+    const res  = await fetch('/api/admin/codes', {
+      headers: { 'X-Admin-Token': adminToken }
+    });
+    const data = await res.json();
+    const codes = data.codes || [];
+    document.getElementById('codeCount').textContent = codes.length + ' kod';
+
+    const cont = document.getElementById('codesContainer');
+    if (!codes.length) {
+      cont.innerHTML = `<div style="font-family:'Space Mono',monospace;font-size:.65rem;color:var(--muted);text-align:center;padding:28px;">Henüz kod yok.</div>`;
+      return;
+    }
+
+    // Tablo başlığı
+    cont.innerHTML = `
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border2);">
+              <th style="font-family:'Space Mono',monospace;font-size:.55rem;color:var(--muted);letter-spacing:.12em;padding:8px 12px;text-align:left;">KOD</th>
+              <th style="font-family:'Space Mono',monospace;font-size:.55rem;color:var(--muted);letter-spacing:.12em;padding:8px 12px;text-align:left;">DURUM</th>
+              <th style="font-family:'Space Mono',monospace;font-size:.55rem;color:var(--muted);letter-spacing:.12em;padding:8px 12px;text-align:left;">NOT</th>
+              <th style="font-family:'Space Mono',monospace;font-size:.55rem;color:var(--muted);letter-spacing:.12em;padding:8px 12px;text-align:left;">TARİH</th>
+              <th style="font-family:'Space Mono',monospace;font-size:.55rem;color:var(--muted);letter-spacing:.12em;padding:8px 12px;text-align:left;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${codes.map(c => {
+              const used    = c.used;
+              const date    = (c.used_at || c.created_at || '').slice(0,16).replace('T',' ');
+              const statusBg = used ? 'rgba(255,92,53,.08)' : 'rgba(52,211,153,.08)';
+              const statusBorder = used ? 'rgba(255,92,53,.3)' : 'rgba(52,211,153,.3)';
+              const statusColor  = used ? '#ff5c35' : '#34d399';
+              const statusLabel  = used ? '✕ Kullanıldı' : '✓ Geçerli';
+              return `
+                <tr style="border-bottom:1px solid var(--border);transition:background .15s;" onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background=''">
+                  <td style="padding:12px 12px;">
+                    <span style="font-family:'Syne Mono',monospace;font-size:1rem;color:${used?'var(--muted)':'var(--accent)'};letter-spacing:.12em;">${c.code}</span>
+                    <button onclick="copyText('${c.code}','Kod kopyalandı ✓')" title="Kopyala"
+                      style="margin-left:8px;padding:2px 8px;background:transparent;border:1px solid var(--border2);border-radius:5px;color:var(--muted);font-size:.6rem;font-family:'Space Mono',monospace;cursor:pointer;">📋</button>
+                  </td>
+                  <td style="padding:12px 12px;">
+                    <span style="display:inline-block;padding:3px 10px;border-radius:100px;background:${statusBg};border:1px solid ${statusBorder};color:${statusColor};font-family:'Space Mono',monospace;font-size:.6rem;">${statusLabel}</span>
+                  </td>
+                  <td style="padding:12px 12px;font-family:'Space Grotesk',sans-serif;font-size:.82rem;color:var(--muted2);">${c.note || '—'}</td>
+                  <td style="padding:12px 12px;font-family:'Space Mono',monospace;font-size:.62rem;color:var(--muted);">${date}</td>
+                  <td style="padding:12px 12px;text-align:right;">
+                    <button onclick="deleteCode('${c.code}')"
+                      style="padding:4px 12px;background:transparent;border:1px solid rgba(255,92,53,.3);border-radius:7px;color:var(--accent2);font-family:'Space Mono',monospace;font-size:.6rem;cursor:pointer;transition:all .15s;"
+                      onmouseover="this.style.background='rgba(255,92,53,.08)'" onmouseout="this.style.background=''">
+                      SİL
+                    </button>
+                  </td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  } catch(e) {
+    toast('⚠ Kodlar yüklenemedi');
+  }
+}
+
+async function deleteCode(code) {
+  if (!confirm(`"${code}" kodunu silmek istediğinize emin misiniz?`)) return;
+  try {
+    const res = await fetch('/api/admin/delete-code/' + encodeURIComponent(code), {
+      method: 'POST',
+      headers: { 'X-Admin-Token': adminToken }
+    });
+    if (res.ok) { toast('✅ Kod silindi'); loadCodes(); }
+    else toast('❌ Silinemedi');
+  } catch(e) { toast('⚠ Bağlantı hatası'); }
+}
+
+async function deleteUsedCodes() {
+  if (!confirm('Kullanılmış tüm kodlar silinecek. Emin misiniz?')) return;
+  try {
+    const res = await fetch('/api/admin/delete-used-codes', {
+      method: 'POST',
+      headers: { 'X-Admin-Token': adminToken }
+    });
+    const data = await res.json();
+    if (res.ok) {
+      toast('✅ ' + data.deleted + ' kullanılmış kod silindi');
+      loadCodes();
+    } else {
+      toast('❌ ' + (data.error || 'Hata'));
+    }
+  } catch(e) { toast('⚠ Bağlantı hatası'); }
+}
+</script>
+</body>
+</html>

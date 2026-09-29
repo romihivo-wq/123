@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>QR — مقفلة</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,700&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Tajawal:wght@400;500;700;800&family=Syne+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+html,body{width:100%;height:100%;overflow:hidden;}
+
+:root{
+  --bg:#060608;
+  --s1:#0f0f12;
+  --s2:#16161a;
+  --b1:#1c1c22;
+  --b2:#28282f;
+  --acc:#d4ff47;
+  --red:#ff5533;
+  --grn:#34d399;
+  --txt:#eeeef0;
+  --m1:#44444e;
+  --m2:#6e6e7a;
+}
+
+body{
+  background:var(--bg);
+  color:var(--txt);
+  font-family:'Tajawal',sans-serif;
+}
+body[dir="ltr"]{font-family:'Space Grotesk',sans-serif;}
+
+/* ───────────────────────────────
+   FULL-SCREEN STAGE
+─────────────────────────────── */
+.stage{
+  position:fixed;inset:0;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* ───────────────────────────────
+   BACKGROUND  — görünen profil
+─────────────────────────────── */
+.bg{
+  position:absolute;inset:0;
+  overflow:hidden;
+}
+
+/* ince grid */
+.bg::before{
+  content:'';position:absolute;inset:0;z-index:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px);
+  background-size:60px 60px;
+}
+
+/* yeşil üst glow */
+.bg::after{
+  content:'';position:absolute;z-index:0;
+  top:-160px;left:50%;transform:translateX(-50%);
+  width:900px;height:420px;
+  background:radial-gradient(ellipse, rgba(212,255,71,.055) 0%, transparent 65%);
+}
+
+/* profil içeriği — büyütülmüş, blur + karartılmış */
+.bg-page{
+  position:absolute;inset:0;z-index:1;
+  display:flex;flex-direction:column;align-items:center;
+  padding:52px 20px 0;
+  gap:14px;
+  filter:blur(7px) brightness(.18) saturate(.55);
+  transform:scale(1.06);
+  transform-origin:top center;
+  pointer-events:none;user-select:none;
+  overflow:hidden;
+}
+
+/* Profil kartı */
+.bp-card{
+  width:min(620px,95vw);
+  background:var(--s1);border:1px solid var(--b2);border-radius:22px;
+  padding:36px;
+  position:relative;
+}
+.bp-card::before{
+  content:'';position:absolute;top:-1px;left:20%;right:20%;height:2px;
+  background:linear-gradient(90deg,transparent,var(--acc),transparent);
+}
+.bp-head{display:flex;gap:22px;align-items:center;}
+.bp-ava{
+  width:100px;height:100px;border-radius:50%;
+  background:var(--s2);border:2px solid var(--b2);
+  flex-shrink:0;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;font-size:2.5rem;
+}
+.bp-ava img{width:100%;height:100%;object-fit:cover;}
+.bp-info{flex:1;}
+.bp-name{
+  font-family:'Syne Mono',monospace;
+  font-size:1.55rem;font-weight:700;color:var(--acc);
+  letter-spacing:.04em;text-transform:uppercase;margin-bottom:8px;
+}
+.bp-name::before{content:'@';opacity:.45;font-size:1.1rem;}
+body[dir="rtl"] .bp-name::before{content:'';}
+.bp-date{
+  font-family:'Space Mono',monospace;font-size:.72rem;color:var(--m2);margin-bottom:12px;
+}
+.bp-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.bp-pill{
+  padding:5px 14px;background:var(--bg);
+  border:1px solid var(--b1);border-radius:100px;
+  font-family:'Space Mono',monospace;font-size:.7rem;color:var(--m2);
+}
+.bp-pill b{color:var(--acc);}
+.bp-socs{display:flex;gap:8px;flex-wrap:wrap;}
+.bp-soc{
+  padding:9px 18px;border-radius:100px;
+  font-size:.82rem;font-weight:600;
+  border:1px solid;
+  display:inline-flex;align-items:center;gap:7px;
+}
+.bp-soc.wa{color:#25d366;border-color:#25d366;background:rgba(37,211,102,.06);}
+.bp-soc.ig{color:#e1306c;border-color:#e1306c;background:rgba(225,48,108,.07);}
+.bp-soc.tt{color:#ff0050;border-color:#ff0050;background:rgba(255,0,80,.06);}
+
+/* Mesaj kartı */
+.bp-msg{
+  width:min(620px,95vw);
+  background:var(--s1);border:1px solid var(--b2);border-radius:18px;padding:28px 32px;
+}
+.bp-msg-lbl{
+  font-family:'Space Mono',monospace;font-size:.58rem;
+  color:var(--m1);letter-spacing:.18em;text-transform:uppercase;margin-bottom:14px;
+}
+.bp-line{height:9px;background:var(--b2);border-radius:3px;margin-bottom:8px;}
+.bp-line.l85{width:85%;}
+.bp-line.l70{width:70%;}
+.bp-line.l55{width:55%;}
+.bp-line.l35{width:35%;}
+
+/* Yorum kartları */
+.bp-replies{
+  width:min(620px,95vw);
+  display:flex;flex-direction:column;gap:11px;
+}
+.bp-reply{
+  background:var(--s1);border:1px solid var(--b2);border-radius:14px;
+  padding:18px 22px;
+}
+
+/* ───────────────────────────────
+   OVERLAY  — buzlu cam + koyulaştırma
+─────────────────────────────── */
+.veil{
+  position:absolute;inset:0;z-index:2;
+  background:rgba(6,6,8,.60);
+  backdrop-filter:blur(1px) saturate(1.2);
+  -webkit-backdrop-filter:blur(1px) saturate(1.2);
+}
+
+/* kırmızı alt glow — kart hizasında */
+.veil::after{
+  content:'';position:absolute;
+  bottom:0;left:50%;transform:translateX(-50%);
+  width:700px;height:350px;
+  background:radial-gradient(ellipse at 50% 100%, rgba(255,85,51,.09) 0%, transparent 65%);
+}
+
+/* ───────────────────────────────
+   LOCK CARD
+─────────────────────────────── */
+.card-wrap{
+  position:relative;z-index:3;
+  width:min(390px, calc(100vw - 32px));
+}
+
+.card{
+  background:rgba(12,12,15,.97);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:30px;
+  padding:40px 32px 32px;
+  position:relative;overflow:hidden;
+  box-shadow:
+    0 0 0 1px rgba(255,85,51,.07) inset,
+    0 48px 96px rgba(0,0,0,.85),
+    0 12px 40px rgba(0,0,0,.6);
+  animation:cardAppear .5s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes cardAppear{
+  from{opacity:0;transform:translateY(30px) scale(.96);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+
+/* üst kırmızı bant */
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1.5px;
+  background:linear-gradient(90deg,
+    transparent 5%,
+    rgba(255,85,51,.3) 20%,
+    var(--red) 45%,
+    var(--red) 55%,
+    rgba(255,85,51,.3) 80%,
+    transparent 95%);
+}
+
+/* kırmızı iç glow — üstten */
+.card::after{
+  content:'';position:absolute;top:-80px;left:50%;transform:translateX(-50%);
+  width:320px;height:200px;
+  background:radial-gradient(ellipse, rgba(255,85,51,.13) 0%, transparent 68%);
+  pointer-events:none;
+}
+
+/* ── Avatar ── */
+.card-ava-wrap{
+  display:flex;flex-direction:column;align-items:center;
+  gap:11px;margin-bottom:28px;position:relative;z-index:1;
+}
+
+.ava-frame{
+  position:relative;width:88px;height:88px;
+}
+
+/* dönen ikili halka */
+.ring-outer{
+  position:absolute;inset:-8px;border-radius:50%;
+  border:1px solid transparent;
+  border-top-color:rgba(255,85,51,.7);
+  border-bottom-color:rgba(255,85,51,.2);
+  animation:rot1 4s linear infinite;
+}
+.ring-inner{
+  position:absolute;inset:-3px;border-radius:50%;
+  border:1px dashed rgba(255,85,51,.25);
+  animation:rot2 6s linear infinite reverse;
+}
+@keyframes rot1{to{transform:rotate(360deg);}}
+@keyframes rot2{to{transform:rotate(360deg);}}
+
+.ava{
+  width:88px;height:88px;border-radius:50%;
+  background:var(--s2);
+  border:2px solid rgba(255,255,255,.08);
+  overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  font-size:2.2rem;
+  position:relative;z-index:1;
+}
+.ava img{width:100%;height:100%;object-fit:cover;}
+
+/* kırmızı kilit rozeti */
+.lock-badge{
+  position:absolute;bottom:-2px;right:-2px;z-index:2;
+  width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(145deg,#ff6644,#cc3311);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.8rem;
+  border:2.5px solid rgba(12,12,15,.97);
+  box-shadow:0 2px 14px rgba(255,85,51,.65);
+  animation:badgeGlow 2.2s ease-in-out infinite;
+}
+@keyframes badgeGlow{
+  0%,100%{box-shadow:0 2px 12px rgba(255,85,51,.5);}
+  50%{box-shadow:0 2px 22px rgba(255,85,51,1);}
+}
+
+.card-name{
+  font-family:'Syne Mono',monospace;
+  font-size:1rem;font-weight:700;
+  color:var(--acc);
+  letter-spacing:.08em;text-transform:uppercase;
+  opacity:.88;
+}
+.card-name::before{content:'@';opacity:.4;font-size:.78rem;font-weight:400;}
+body[dir="rtl"] .card-name::before{content:'';}
+
+/* ── Başlık ── */
+.card-head{
+  text-align:center;margin-bottom:22px;position:relative;z-index:1;
+}
+.card-title{
+  font-family:'Space Mono',monospace;
+  font-size:1.02rem;font-weight:700;color:var(--txt);
+  margin-bottom:7px;
+}
+body[dir="rtl"] .card-title{font-family:'Tajawal',sans-serif;font-size:1.08rem;}
+.card-desc{
+  font-family:'Space Mono',monospace;
+  font-size:.62rem;color:var(--m2);line-height:1.8;
+}
+body[dir="rtl"] .card-desc{font-family:'Tajawal',sans-serif;font-size:.78rem;}
+
+/* ── Ayırıcı ── */
+.divider{
+  height:1px;margin:0 -32px 22px;
+  background:linear-gradient(90deg,
+    transparent,rgba(255,255,255,.05) 30%,rgba(255,255,255,.05) 70%,transparent);
+  position:relative;z-index:1;
+}
+
+/* ── Kod alanı ── */
+.code-area{position:relative;z-index:1;margin-bottom:14px;}
+
+.code-lbl{
+  font-family:'Space Mono',monospace;
+  font-size:.55rem;color:var(--acc);
+  letter-spacing:.22em;text-transform:uppercase;
+  margin-bottom:9px;
+  display:flex;align-items:center;gap:8px;
+}
+.code-lbl::after{content:'';flex:1;height:1px;background:rgba(212,255,71,.13);}
+body[dir="rtl"] .code-lbl::after{order:-1;}
+
+.code-field{
+  display:flex;align-items:center;
+  background:rgba(0,0,0,.6);
+  border:1.5px solid rgba(255,255,255,.09);
+  border-radius:18px;overflow:hidden;
+  transition:border-color .22s,box-shadow .22s;
+}
+.code-field:focus-within{
+  border-color:rgba(212,255,71,.5);
+  box-shadow:0 0 0 3px rgba(212,255,71,.06), 0 8px 30px rgba(0,0,0,.4);
+}
+.code-field.err{
+  border-color:rgba(255,85,51,.6)!important;
+  box-shadow:0 0 0 3px rgba(255,85,51,.07)!important;
+  animation:shake .38s cubic-bezier(.36,.07,.19,.97);
+}
+.code-field.ok{
+  border-color:rgba(52,211,153,.55)!important;
+  box-shadow:0 0 0 3px rgba(52,211,153,.07)!important;
+}
+@keyframes shake{
+  10%,90%{transform:translateX(-3px);}
+  20%,80%{transform:translateX(4px);}
+  30%,50%,70%{transform:translateX(-5px);}
+  40%,60%{transform:translateX(5px);}
+}
+
+.code-ico{padding:0 15px;font-size:1rem;color:var(--m1);flex-shrink:0;}
+.code-inp{
+  flex:1;background:transparent;border:none;outline:none;
+  color:var(--acc);
+  font-family:'Syne Mono',monospace;
+  font-size:1.6rem;font-weight:700;
+  letter-spacing:.28em;text-transform:uppercase;
+  padding:15px 2px;height:60px;min-width:0;text-align:center;
+  caret-color:var(--acc);
+}
+.code-inp::placeholder{
+  color:var(--m1);font-size:.88rem;
+  letter-spacing:.06em;font-family:'Space Mono',monospace;
+}
+
+/* ── Buton ── */
+.act-btn{
+  width:100%;padding:17px;
+  background:var(--acc);color:#080a04;
+  border:none;border-radius:16px;
+  font-size:.98rem;font-weight:800;
+  cursor:pointer;letter-spacing:.04em;
+  position:relative;z-index:1;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  transition:transform .15s,box-shadow .15s,background .15s;
+  overflow:hidden;
+}
+body[dir="rtl"] .act-btn{font-family:'Tajawal',sans-serif;font-size:1.02rem;}
+body[dir="ltr"] .act-btn{font-family:'Space Grotesk',sans-serif;}
+.act-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 12px 32px rgba(212,255,71,.3);
+}
+.act-btn:active{transform:translateY(0);}
+.act-btn.busy{
+  background:var(--s2);color:var(--m2);
+  pointer-events:none;
+}
+.spin{
+  width:16px;height:16px;border-radius:50%;
+  border:2px solid rgba(0,0,0,.15);border-top-color:#080a04;
+  animation:sp .6s linear infinite;display:none;flex-shrink:0;
+}
+@keyframes sp{to{transform:rotate(360deg);}}
+.act-btn.busy .spin{display:block;}
+.act-btn.busy .btn-lbl{opacity:0;}
+
+/* ── Mesaj ── */
+.toast-msg{
+  display:none;margin-top:11px;padding:10px 15px;border-radius:12px;
+  font-family:'Space Mono',monospace;font-size:.64rem;
+  text-align:center;line-height:1.7;
+  position:relative;z-index:1;
+}
+body[dir="rtl"] .toast-msg{font-family:'Tajawal',sans-serif;font-size:.78rem;}
+.toast-msg.err{color:#ff9070;background:rgba(255,85,51,.09);border:1px solid rgba(255,85,51,.18);}
+.toast-msg.ok{color:var(--grn);background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.18);}
+
+/* ── Hint ── */
+.card-hint{
+  display:flex;align-items:flex-start;gap:10px;
+  margin-top:16px;padding-top:15px;
+  border-top:1px solid rgba(255,255,255,.045);
+  position:relative;z-index:1;
+}
+.hint-bar{
+  width:2px;min-height:28px;border-radius:2px;
+  background:linear-gradient(to bottom, var(--red), transparent);
+  flex-shrink:0;margin-top:2px;
+}
+.hint-txt{
+  font-family:'Space Mono',monospace;
+  font-size:.6rem;color:var(--m2);line-height:1.82;
+}
+body[dir="rtl"] .hint-txt{font-family:'Tajawal',sans-serif;font-size:.73rem;}
+.hint-txt a{
+  color:var(--acc);text-decoration:none;font-weight:700;
+  border-bottom:1px solid rgba(212,255,71,.25);
+  transition:border-color .15s;
+}
+.hint-txt a:hover{border-color:var(--acc);}
+
+/* ── Dil ── */
+.lang-bar{
+  position:fixed;top:14px;z-index:400;
+  display:flex;gap:3px;
+  background:rgba(6,6,8,.96);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:100px;padding:4px 5px;
+  box-shadow:0 4px 20px rgba(0,0,0,.6);
+}
+body[dir="rtl"] .lang-bar{left:14px;}
+body[dir="ltr"] .lang-bar{right:14px;}
+.lbtn{
+  padding:6px 14px;border-radius:100px;
+  font-family:'Space Mono',monospace;font-size:.68rem;font-weight:700;
+  cursor:pointer;border:none;background:transparent;
+  color:var(--m2);transition:all .15s;
+}
+.lbtn.on{background:var(--acc);color:#070709;}
+
+/* ── Küçük ekranlar ── */
+@media(max-height:680px){
+  .card{padding:28px 26px 24px;}
+  .card-ava-wrap{margin-bottom:18px;}
+  .ava-frame{width:74px;height:74px;}
+  .ava{width:74px;height:74px;}
+  .ring-outer{inset:-7px;}
+  .card-head{margin-bottom:16px;}
+  .divider{margin-bottom:16px;}
+  .code-inp{font-size:1.35rem;height:52px;}
+  .act-btn{padding:14px;}
+}
+@media(max-width:360px){
+  .card{border-radius:22px;padding:28px 18px 22px;}
+  .code-inp{letter-spacing:.2em;}
+}
+</style>
+</head>
+<body dir="rtl">
+
+<div class="lang-bar">
+  <button class="lbtn" id="bAr" onclick="setLang('ar')">AR</button>
+  <button class="lbtn" id="bEn" onclick="setLang('en')">EN</button>
+</div>
+
+<div class="stage">
+
+  <!-- ░░░ ARKA PLAN — BLUR PROFİL ░░░ -->
+  <div class="bg">
+    <div class="bg-page">
+
+      <!-- profil kartı -->
+      <div class="bp-card">
+        <div class="bp-head">
+          <div class="bp-ava">
+            {% if profile_image %}
+              <img src="{{ profile_image }}" alt="" onerror="this.style.display='none'">
+            {% else %}👤{% endif %}
+          </div>
+          <div class="bp-info">
+            {% if display_name %}<div class="bp-name">{{ display_name }}</div>{% endif %}
+            <div class="bp-date">2025 · ──·── · ──:──</div>
+            <div class="bp-pills">
+              <div class="bp-pill">👁 <b>—</b> مشاهدة</div>
+              <div class="bp-pill">💬 <b>—</b> رد</div>
+            </div>
+            <div class="bp-socs">
+              <span class="bp-soc wa">💬 WhatsApp</span>
+              <span class="bp-soc ig">📸 Instagram</span>
+              <span class="bp-soc tt">🎵 TikTok</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- mesaj kartı -->
+      <div class="bp-msg">
+        <div class="bp-msg-lbl">// رسالة</div>
+        <div class="bp-line l85"></div>
+        <div class="bp-line l70"></div>
+        <div class="bp-line l55"></div>
+        <div class="bp-line l35"></div>
+      </div>
+
+      <!-- yorumlar -->
+      <div class="bp-replies">
+        <div class="bp-reply">
+          <div class="bp-line l70"></div>
+          <div class="bp-line l45" style="width:45%"></div>
+        </div>
+        <div class="bp-reply">
+          <div class="bp-line l55"></div>
+          <div class="bp-line l35"></div>
+        </div>
+        <div class="bp-reply">
+          <div class="bp-line l85"></div>
+          <div class="bp-line l45" style="width:45%"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ░░░ SİS ÖRTÜSÜ ░░░ -->
+  <div class="veil"></div>
+
+  <!-- ░░░ KİLİT KARTI ░░░ -->
+  <div class="card-wrap">
+    <div class="card" id="lockCard">
+
+      <!-- Avatar + isim -->
+      <div class="card-ava-wrap">
+        <div class="ava-frame">
+          <div class="ring-outer"></div>
+          <div class="ring-inner"></div>
+          <div class="ava">
+            {% if profile_image %}
+              <img src="{{ profile_image }}" alt="" onerror="this.parentElement.innerHTML='👤'">
+            {% else %}👤{% endif %}
+          </div>
+          <div class="lock-badge">🔒</div>
+        </div>
+        {% if display_name %}
+        <div class="card-name">{{ display_name }}</div>
+        {% endif %}
+      </div>
+
+      <!-- Başlık -->
+      <div class="card-head">
+        <div class="card-title" id="t-title">انتهت فترة التجربة</div>
+        <div class="card-desc" id="t-desc">
+          انتهت مدة التجربة المجانية.<br>أدخل رمز الوصول لتفعيل صفحتك بشكل دائم.
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Kod input -->
+      <div class="code-area">
+        <div class="code-lbl" id="t-lbl">رمز الوصول</div>
+        <div class="code-field" id="codeField">
+          <span class="code-ico">🔑</span>
+          <input
+            class="code-inp" id="codeInp"
+            type="text" maxlength="7"
+            autocomplete="off" autocorrect="off"
+            autocapitalize="characters" spellcheck="false"
+            placeholder="XXXXXXX"
+            oninput="onIn()" onkeydown="onKey(event)"
+          >
+        </div>
+      </div>
+
+      <!-- Buton -->
+      <button class="act-btn" id="actBtn" onclick="doActivate()">
+        <div class="spin"></div>
+        <span class="btn-lbl" id="t-btn">تفعيل الحساب</span>
+      </button>
+
+      <div class="toast-msg" id="toastMsg"></div>
+
+      <!-- Hint -->
+      <div class="card-hint">
+        <div class="hint-bar"></div>
+        <div class="hint-txt" id="t-hint">
+          للحصول على رمز الوصول، تواصل معنا عبر
+          <a href="https://wa.me/9647737799414" target="_blank" rel="noopener">WhatsApp ↗</a><br>
+          أرسل اسم مستخدمك وسنرسل لك الرمز فوراً.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+const ENTRY_ID    = "{{ entry_id }}";
+const OWNER_TOKEN = "{{ owner_token }}";
+
+const T = {
+  ar:{
+    title:"انتهت فترة التجربة",
+    desc:"انتهت مدة التجربة المجانية.<br>أدخل رمز الوصول لتفعيل صفحتك بشكل دائم.",
+    lbl:"رمز الوصول",
+    btn:"تفعيل الحساب",
+    hint:'للحصول على رمز الوصول، تواصل معنا عبر <a href="https://wa.me/9647737799414" target="_blank" rel="noopener">WhatsApp ↗</a><br>أرسل اسم مستخدمك وسنرسل لك الرمز فوراً.',
+    empty:"أدخل الرمز كاملاً (٧ خانات)",
+    wrong:"❌ رمز غير صحيح",
+    used:"⛔ هذا الرمز مستخدم مسبقاً",
+    fmt:"⚠️ تنسيق خاطئ",
+    limit:"⏱ محاولات كثيرة، انتظر",
+    unauth:"🚫 غير مصرح",
+    ok:"✅ تم التفعيل! جارٍ التحميل...",
+  },
+  en:{
+    title:"Trial Period Ended",
+    desc:"Your free trial has ended.<br>Enter the access code to unlock your page permanently.",
+    lbl:"ACCESS CODE",
+    btn:"Activate Account",
+    hint:'To get your access code, contact us on <a href="https://wa.me/9647737799414" target="_blank" rel="noopener">WhatsApp ↗</a><br>Send your username and we\'ll reply instantly.',
+    empty:"Enter the full 7-character code",
+    wrong:"❌ Incorrect code",
+    used:"⛔ This code has already been used",
+    fmt:"⚠️ Invalid format",
+    limit:"⏱ Too many attempts",
+    unauth:"🚫 Unauthorized",
+    ok:"✅ Activated! Loading...",
+  }
+};
+
+let lang = localStorage.getItem("qlang") || "ar";
+
+function setLang(l){
+  lang=l; localStorage.setItem("qlang",l);
+  document.body.dir = l==="ar"?"rtl":"ltr";
+  document.documentElement.lang = l;
+  document.getElementById("bAr").classList.toggle("on",l==="ar");
+  document.getElementById("bEn").classList.toggle("on",l==="en");
+  applyT();
+}
+function applyT(){
+  const t=T[lang];
+  document.getElementById("t-title").textContent = t.title;
+  document.getElementById("t-desc").innerHTML    = t.desc;
+  document.getElementById("t-lbl").textContent   = t.lbl;
+  document.getElementById("t-btn").textContent   = t.btn;
+  document.getElementById("t-hint").innerHTML    = t.hint;
+}
+setLang(lang);
+
+function onIn(){
+  const inp = document.getElementById("codeInp");
+  inp.value = inp.value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,7);
+  const f = document.getElementById("codeField");
+  f.classList.remove("err","ok");
+  document.getElementById("toastMsg").style.display="none";
+}
+function onKey(e){ if(e.key==="Enter") doActivate(); }
+
+async function doActivate(){
+  const t    = T[lang];
+  const code = document.getElementById("codeInp").value.trim();
+  const btn  = document.getElementById("actBtn");
+  const f    = document.getElementById("codeField");
+
+  document.getElementById("toastMsg").style.display="none";
+  f.classList.remove("err","ok");
+
+  if(!code || code.length!==7){
+    f.classList.add("err");
+    showMsg(t.empty,"err"); return;
+  }
+
+  btn.classList.add("busy");
+  try{
+    const res  = await fetch("/api/activate/"+ENTRY_ID,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({code, owner_token:OWNER_TOKEN})
+    });
+    const data = await res.json();
+
+    if(res.ok && (data.ok || data.already_active)){
+      f.classList.add("ok");
+      document.getElementById("lockCard").style.transform="scale(1.015)";
+      document.getElementById("lockCard").style.transition="transform .3s ease";
+      showMsg(t.ok,"ok");
+      setTimeout(()=>{ location.reload(); }, 1500);
+      return;
+    }
+
+    f.classList.add("err");
+    if     (data.error==="USED_CODE")  showMsg(t.used,  "err");
+    else if(data.error==="WRONG_CODE") showMsg(t.wrong, "err");
+    else if(res.status===429)          showMsg(t.limit, "err");
+    else if(res.status===400)          showMsg(t.fmt,   "err");
+    else if(res.status===403)          showMsg(t.unauth,"err");
+    else                               showMsg(t.wrong, "err");
+
+  }catch(e){
+    f.classList.add("err");
+    showMsg("Connection error","err");
+  }finally{
+    btn.classList.remove("busy");
+  }
+}
+
+function showMsg(txt,type){
+  const m = document.getElementById("toastMsg");
+  m.innerHTML = txt;
+  m.className = "toast-msg "+type;
+  m.style.display = "block";
+}
+
+window.addEventListener("load",()=>{
+  setTimeout(()=> document.getElementById("codeInp").focus(), 400);
+});
+</script>
+</body>
+</html>
